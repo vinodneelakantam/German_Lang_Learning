@@ -101,17 +101,41 @@ select {
 
 .lesson-head {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  gap: 10px;
-  padding: 14px 14px 10px;
-  background: linear-gradient(90deg, rgba(255, 127, 80, 0.16), rgba(0, 163, 163, 0.12));
+  gap: 6px;
+  padding: 8px 10px;
+  background: linear-gradient(90deg, rgba(255, 127, 80, 0.10), rgba(0, 163, 163, 0.08));
   border-bottom: 1px solid var(--line);
 }
 
 .lesson h2 {
   margin: 0;
   font-size: 1.08rem;
+}
+
+.signature {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+  font-size: 0.92rem;
+  color: #3a4e68;
+}
+
+.signature strong {
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.signature a {
+  color: var(--accent-2);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.signature a:hover {
+  text-decoration: underline;
 }
 
 button {
@@ -361,6 +385,11 @@ function playRolePlay(dialog, title){
 </head>
 <body>
 
+<div class="signature">
+  <strong>Vinod Kumar Neelakantam</strong>
+  <a href="https://www.linkedin.com/in/vinodneelakantam/" target="_blank" rel="noopener">linkedin.com/in/vinodneelakantam</a>
+</div>
+
 <div class="topbar">
 Speed:
 <select onchange="setSpeed(this.value)">
@@ -373,7 +402,7 @@ Speed:
 </div>
 
 <h1>English ⇄ German FULL Trainer</h1>
-<p class="subtitle">Practice vocabulary with colorful lesson cards and one-tap pronunciation. Total entries: <strong id="totalCount">0</strong></p>
+<p class="subtitle">Click any word to hear it. Use Play to run a full category. Total entries: <strong id="totalCount">0</strong></p>
 <div id="lessonsContainer"></div>
 <h2 class="section-title">Role Play Scenarios</h2>
 <p class="subtitle">Play practical conversations for daily immigrant and tourist situations.</p>
@@ -937,7 +966,6 @@ function renderLessonCard(name){
   return `
   <div class="lesson">
     <div class="lesson-head">
-      <h2>${name}</h2>
       <div>
         <button class="play-btn" onclick="playLesson(lessons['${esc(name)}'],'${esc(name)}')">▶ Play</button>
         <button class="stop-btn" onclick="stopPlayback()">Stop</button>
