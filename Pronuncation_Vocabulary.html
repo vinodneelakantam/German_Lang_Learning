@@ -184,6 +184,76 @@ button:hover { filter: brightness(1.06); }
   font-weight: 400;
 }
 
+.section-title {
+  margin: 10px 0;
+  font-family: "Raleway", "Gill Sans", sans-serif;
+}
+
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.scenario-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(20, 45, 75, 0.08);
+}
+
+.scenario-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 14px 10px;
+  background: linear-gradient(90deg, rgba(31, 107, 255, 0.15), rgba(255, 127, 80, 0.12));
+  border-bottom: 1px solid var(--line);
+}
+
+.scenario-head h3 {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.scenario-sub {
+  margin: 0;
+  padding: 0 14px 8px;
+  color: #42556f;
+  font-size: 0.94rem;
+}
+
+.play-role-btn {
+  background: linear-gradient(135deg, #1f6bff, #00a3a3);
+  padding: 8px 13px;
+}
+
+.dialog-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dialog-table th,
+.dialog-table td {
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px dashed #e2eaf4;
+  vertical-align: top;
+}
+
+.dialog-table th {
+  background: #eef5ff;
+  color: #264f78;
+  font-size: 0.9rem;
+}
+
+.dialog-table tbody tr:nth-child(odd) {
+  background: #f9fbff;
+}
+
 @media (max-width: 700px) {
   body { padding: 14px; }
   .topbar {
@@ -199,12 +269,16 @@ let playbackActive = false;
 let playbackTimerA = null;
 let playbackTimerB = null;
 
-function speak(text, lang){
+function say(text, lang, cancelFirst){
   const u = new SpeechSynthesisUtterance(text);
   u.lang = lang;
   u.rate = rate;
-  window.speechSynthesis.cancel();
+  if(cancelFirst) window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
+}
+
+function speak(text, lang){
+  say(text, lang, true);
 }
 
 function setSpeed(v){ rate = v; }
@@ -252,6 +326,36 @@ function playLesson(list, lessonName){
   }
   run();
 }
+
+function playRolePlay(dialog, title){
+  stopPlayback();
+  playbackActive = true;
+  setPlaybackStatus(`Role Play: ${title}`);
+
+  let i = 0;
+  function run(){
+    if(!playbackActive) return;
+
+    if(i < dialog.length){
+      const en = dialog[i][0] || '';
+      const de = dialog[i][1] || '';
+
+      if(en) say(en, 'en-US', false);
+
+      playbackTimerA = setTimeout(() => {
+        if(!playbackActive) return;
+        if(de) say(de, 'de-DE', false);
+        i++;
+        playbackTimerB = setTimeout(run, 1700);
+      }, 1400);
+    } else {
+      playbackActive = false;
+      setPlaybackStatus(`Completed role play: ${title}`);
+    }
+  }
+
+  run();
+}
 </script>
 
 </head>
@@ -271,6 +375,9 @@ Speed:
 <h1>English ⇄ German FULL Trainer</h1>
 <p class="subtitle">Practice vocabulary with colorful lesson cards and one-tap pronunciation. Total entries: <strong id="totalCount">0</strong></p>
 <div id="lessonsContainer"></div>
+<h2 class="section-title">Role Play Scenarios</h2>
+<p class="subtitle">Play practical conversations for daily immigrant and tourist situations.</p>
+<div id="rolePlayContainer" class="scenario-grid"></div>
 
 <!-- ================= DATA SECTION ================= -->
 
@@ -742,6 +849,81 @@ const totalEntries = Object.values(lessons).reduce((sum, list) => sum + list.len
 const totalCountNode = document.getElementById('totalCount');
 if(totalCountNode) totalCountNode.textContent = totalEntries;
 
+const rolePlayScenarios = [
+  {
+    title: 'Supermarket Shopping',
+    context: 'Ask for products, compare prices, and pay at checkout.',
+    lines: [
+      ['Hello, where can I find rice?', 'Hallo, wo finde ich Reis?'],
+      ['Aisle five, next to pasta.', 'Gang fuenf, neben den Nudeln.'],
+      ['Do you have lactose free milk?', 'Haben Sie laktosefreie Milch?'],
+      ['Yes, in the fridge section.', 'Ja, in der Kuehlabteilung.'],
+      ['Can I pay by card?', 'Kann ich mit Karte bezahlen?'],
+      ['Yes, card or cash is fine.', 'Ja, Karte oder Bargeld ist in Ordnung.']
+    ]
+  },
+  {
+    title: 'Agentur fuer Arbeit',
+    context: 'Register as a job seeker and ask for training support.',
+    lines: [
+      ['Good morning, I have an appointment at ten.', 'Guten Morgen, ich habe um zehn Uhr einen Termin.'],
+      ['Please show your ID and registration.', 'Bitte zeigen Sie Ihren Ausweis und Ihre Anmeldung.'],
+      ['I am looking for a full time job.', 'Ich suche eine Vollzeitstelle.'],
+      ['We can offer a language and training course.', 'Wir koennen einen Sprach und Weiterbildungskurs anbieten.'],
+      ['When is my next appointment?', 'Wann ist mein naechster Termin?'],
+      ['Next Tuesday at nine thirty.', 'Naechsten Dienstag um neun Uhr dreissig.']
+    ]
+  },
+  {
+    title: 'Immigration Office Visit',
+    context: 'Submit documents for residence permit extension.',
+    lines: [
+      ['I would like to extend my residence permit.', 'Ich moechte meine Aufenthaltserlaubnis verlaengern.'],
+      ['Do you have the application form?', 'Haben Sie das Antragsformular?'],
+      ['Here is my registration certificate.', 'Hier ist meine Meldebescheinigung.'],
+      ['Do you also have health insurance proof?', 'Haben Sie auch einen Nachweis der Krankenversicherung?'],
+      ['Can I travel while waiting?', 'Kann ich waehrend der Wartezeit reisen?'],
+      ['Please wait for written confirmation first.', 'Bitte warten Sie zuerst auf die schriftliche Bestaetigung.']
+    ]
+  },
+  {
+    title: 'Tourist Information Center',
+    context: 'Ask for local attractions and transport advice.',
+    lines: [
+      ['We are new in the city and need a day plan.', 'Wir sind neu in der Stadt und brauchen einen Tagesplan.'],
+      ['Start with the old town and river walk.', 'Beginnen Sie mit der Altstadt und dem Spaziergang am Fluss.'],
+      ['How do we get there by public transport?', 'Wie kommen wir mit oeffentlichen Verkehrsmitteln dorthin?'],
+      ['Take tram line two from this stop.', 'Nehmen Sie die Strassenbahnlinie zwei von dieser Haltestelle.'],
+      ['Can you mark these places on the map?', 'Koennen Sie diese Orte auf der Karte markieren?'],
+      ['Of course, here is your map.', 'Natuerlich, hier ist Ihre Karte.']
+    ]
+  },
+  {
+    title: 'Doctor and Pharmacy',
+    context: 'Describe symptoms and receive medicine instructions.',
+    lines: [
+      ['I have had a fever since yesterday.', 'Ich habe seit gestern Fieber.'],
+      ['Do you also have a cough?', 'Haben Sie auch Husten?'],
+      ['Yes, and I feel very tired.', 'Ja, und ich fuehle mich sehr muede.'],
+      ['I will give you a prescription.', 'Ich gebe Ihnen ein Rezept.'],
+      ['How often should I take this medicine?', 'Wie oft soll ich dieses Medikament nehmen?'],
+      ['Two times daily after meals.', 'Zweimal taeglich nach dem Essen.']
+    ]
+  },
+  {
+    title: 'Landlord and Apartment Repair',
+    context: 'Report a home issue and arrange repair timing.',
+    lines: [
+      ['The heating is not working in my apartment.', 'Die Heizung in meiner Wohnung funktioniert nicht.'],
+      ['Since when do you have this problem?', 'Seit wann haben Sie dieses Problem?'],
+      ['Since last night, it is very cold.', 'Seit letzter Nacht, es ist sehr kalt.'],
+      ['We will send a technician tomorrow morning.', 'Wir schicken morgen frueh einen Techniker.'],
+      ['Will this cost extra money?', 'Kostet das extra Geld?'],
+      ['No, this repair is covered by the landlord.', 'Nein, diese Reparatur ist vom Vermieter abgedeckt.']
+    ]
+  }
+];
+
 function renderLessonCard(name){
   const lessonEntries = lessons[name].map((p) => {
     const enCell = `<td class="speak-cell english" onclick="speak('${esc(p[0])}','en-US')">${p[0]}</td>`;
@@ -800,6 +982,40 @@ if(uncategorized.length){
     <div class="category-grid">${uncategorized.map(name => renderLessonCard(name)).join('')}</div>
   </section>`;
 }
+
+const rolePlayContainer = document.getElementById('rolePlayContainer');
+rolePlayScenarios.forEach((scenario, index) => {
+  const rows = scenario.lines.map((line) => {
+    const en = line[0] || '';
+    const de = line[1] || '';
+    const enCell = en ? `<td class="speak-cell english" onclick="speak('${esc(en)}','en-US')">${en}</td>` : '<td></td>';
+    const deCell = de ? `<td class="speak-cell german" onclick="speak('${esc(de)}','de-DE')">${de}</td>` : '<td></td>';
+    return `<tr>${enCell}${deCell}</tr>`;
+  }).join('');
+
+  rolePlayContainer.innerHTML += `
+  <article class="scenario-card">
+    <div class="scenario-head">
+      <h3>${scenario.title}</h3>
+      <div>
+        <button class="play-role-btn" onclick="playRolePlay(rolePlayScenarios[${index}].lines,'${esc(scenario.title)}')">▶ Play</button>
+        <button class="stop-btn" onclick="stopPlayback()">Stop</button>
+      </div>
+    </div>
+    <p class="scenario-sub">${scenario.context}</p>
+    <div class="entries">
+      <table class="dialog-table">
+        <thead>
+          <tr>
+            <th>English</th>
+            <th>German</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </article>`;
+});
 </script>
 
 </body>
