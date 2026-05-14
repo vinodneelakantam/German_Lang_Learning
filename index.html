@@ -332,10 +332,6 @@ function playLesson(list, lessonName, categoryTitle){
   const label = categoryTitle ? `${categoryTitle} • ${lessonName}` : lessonName;
   setPlaybackStatus(`Playing ${label}`);
 
-  if(categoryTitle){
-    say(`Category ${categoryTitle}`, 'en-US', false);
-  }
-
   let i=0;
   function run(){
     if(!playbackActive) return;
@@ -354,7 +350,18 @@ function playLesson(list, lessonName, categoryTitle){
     }
   }
 
-  playbackTimerB = setTimeout(run, categoryTitle ? 1200 : 0);
+  if(categoryTitle){
+    const intro = new SpeechSynthesisUtterance(categoryTitle);
+    intro.lang = 'en-US';
+    intro.rate = rate;
+    intro.onend = () => {
+      if(!playbackActive) return;
+      playbackTimerB = setTimeout(run, 250);
+    };
+    window.speechSynthesis.speak(intro);
+  } else {
+    playbackTimerB = setTimeout(run, 0);
+  }
 }
 
 function playRolePlay(dialog, title){
@@ -883,7 +890,7 @@ const lessonCategories = [
 const lessonToCategory = {};
 lessonCategories.forEach((section) => {
   section.lessons.forEach((lessonName) => {
-    lessonToCategory[lessonName] = section.title.replace('Category: ', '');
+    lessonToCategory[lessonName] = section.title;
   });
 });
 
