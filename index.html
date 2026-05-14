@@ -329,7 +329,7 @@ function stopPlayback(){
 function playLesson(list, lessonName, categoryTitle){
   stopPlayback();
   playbackActive = true;
-  const label = categoryTitle ? `${categoryTitle} • ${lessonName}` : lessonName;
+  const label = categoryTitle || lessonName;
   setPlaybackStatus(`Playing ${label}`);
 
   let i=0;
