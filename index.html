@@ -340,8 +340,9 @@ button:hover { filter: brightness(1.06); }
 </style>
 
 <script>
-let rate = 0.9;
+let rate = 1.0;
 let playbackActive = false;
+let playbackPaused = false;
 let playbackTimerA = null;
 let playbackTimerB = null;
 let orderedLessons = [];
@@ -350,6 +351,7 @@ let activeAutoQueue = [];
 let activeQueueIndex = 0;
 let categoryDescriptions = {};
 let autoPlayNextCategories = true;
+let lastPlaybackStarter = null;
 
 function say(text, lang, cancelFirst){
   const u = new SpeechSynthesisUtterance(text);
@@ -363,7 +365,11 @@ function speak(text, lang){
   say(text, lang, true);
 }
 
-function setSpeed(v){ rate = v; }
+function setSpeed(v){
+  const nextRate = Number.parseFloat(v);
+  if(Number.isNaN(nextRate)) return;
+  rate = Math.min(2, Math.max(0.1, nextRate));
+}
 
 function clearPlaybackTimers(){
   if(playbackTimerA) clearTimeout(playbackTimerA);
@@ -381,8 +387,47 @@ function setAutoPlayNext(enabled){
   autoPlayNextCategories = !!enabled;
 }
 
+function pausePlayback(){
+  if(!playbackActive || playbackPaused) return;
+  playbackPaused = true;
+  clearPlaybackTimers();
+  window.speechSynthesis.cancel();
+  setPlaybackStatus('Paused');
+}
+
+function resumePlayback(){
+  if(!playbackActive || !playbackPaused) return;
+  playbackPaused = false;
+  setPlaybackStatus('Resumed');
+
+  if(activeAutoQueue.length){
+    playNextQueuedLesson();
+  }
+}
+
+function handlePlaybackAction(action){
+  if(!action) return;
+
+  if(action === 'play'){
+    if(playbackActive && playbackPaused){
+      resumePlayback();
+    } else if(!playbackActive && lastPlaybackStarter){
+      lastPlaybackStarter();
+    } else if(playbackActive){
+      setPlaybackStatus('Already playing');
+    } else {
+      setPlaybackStatus('Choose a lesson and press Play');
+    }
+  } else if(action === 'pause'){
+    pausePlayback();
+  } else if(action === 'stop'){
+    stopPlayback();
+  }
+}
+
 function stopPlayback(){
   playbackActive = false;
+  playbackPaused = false;
   clearPlaybackTimers();
   activeAutoQueue = [];
   activeQueueIndex = 0;
@@ -407,7 +452,7 @@ function speakIntroThen(introText, startPlayback){
 
   let finished = false;
   const finishOnce = () => {
-    if(finished || !playbackActive) return;
+    if(finished || !playbackActive || playbackPaused) return;
     finished = true;
     startPlayback();
   };
@@ -430,12 +475,12 @@ function playSingleLesson(list, categoryTitle, announceCategory, onComplete){
 
   let i=0;
   function run(){
-    if(!playbackActive) return;
+    if(!playbackActive || playbackPaused) return;
 
     if(i<list.length){
       say(list[i][0], 'en-US', false);
       playbackTimerA = setTimeout(()=>{
-        if(!playbackActive) return;
+        if(!playbackActive || playbackPaused) return;
         if(list[i][1]) say(list[i][1], 'de-DE', false);
         i++;
         playbackTimerB = setTimeout(run,1500);
@@ -456,10 +501,11 @@ function playSingleLesson(list, categoryTitle, announceCategory, onComplete){
 }
 
 function playNextQueuedLesson(){
-  if(!playbackActive) return;
+  if(!playbackActive || playbackPaused) return;
 
   if(activeQueueIndex >= activeAutoQueue.length){
     playbackActive = false;
+    playbackPaused = false;
     setPlaybackStatus('Completed all categories');
     return;
   }
@@ -476,6 +522,7 @@ function playNextQueuedLesson(){
 }
 
 function playLesson(lessonName, categoryTitle){
+  lastPlaybackStarter = () => playLesson(lessonName, categoryTitle);
   stopPlayback();
 
   const start = lessonOrder[lessonName];
@@ -489,19 +536,22 @@ function playLesson(lessonName, categoryTitle){
     : orderedLessons.filter(item => item.sectionIndex === start.sectionIndex);
   activeQueueIndex = 0;
   playbackActive = true;
+  playbackPaused = false;
   const mode = autoPlayNextCategories ? 'Auto' : 'Single Category';
   setPlaybackStatus(`Starting (${mode}): ${categoryTitle || 'Selected Category'}`);
   playNextQueuedLesson();
 }
 
 function playRolePlay(dialog, title, contextText){
+  lastPlaybackStarter = () => playRolePlay(dialog, title, contextText);
   stopPlayback();
   playbackActive = true;
+  playbackPaused = false;
   setPlaybackStatus(`Now Playing Role Play: ${title}`);
 
   let i = 0;
   function run(){
-    if(!playbackActive) return;
+    if(!playbackActive || playbackPaused) return;
 
     if(i < dialog.length){
       const en = dialog[i][0] || '';
@@ -510,13 +560,14 @@ function playRolePlay(dialog, title, contextText){
       if(en) say(en, 'en-US', false);
 
       playbackTimerA = setTimeout(() => {
-        if(!playbackActive) return;
+        if(!playbackActive || playbackPaused) return;
         if(de) say(de, 'de-DE', false);
         i++;
         playbackTimerB = setTimeout(run, 1700);
       }, 1400);
     } else {
       playbackActive = false;
+      playbackPaused = false;
       setPlaybackStatus(`Completed role play: ${title}`);
     }
   }
@@ -545,15 +596,17 @@ function playRolePlay(dialog, title, contextText){
 <div class="topbar">
 Speed:
 <select onchange="setSpeed(this.value)">
-<option value="0.6">Slow</option>
-<option value="0.9" selected>Normal</option>
-<option value="1.2">Fast</option>
+<option value="0.5">Slow</option>
+<option value="1.0" selected>Normal</option>
+<option value="1.5">Fast</option>
 </select>
 <label style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#36506e;">
 <input type="checkbox" checked onchange="setAutoPlayNext(this.checked)">
 Auto-Play-Next topics
 </label>
-<button class="stop-btn" onclick="stopPlayback()">Stop</button>
+<button class="play-btn" onclick="handlePlaybackAction('play')">Play / Resume</button>
+<button onclick="handlePlaybackAction('pause')">Pause</button>
+<button class="stop-btn" onclick="handlePlaybackAction('stop')">Stop</button>
 <span id="playbackStatus" class="playback-status">Idle</span>
 </div>
 
@@ -1168,7 +1221,6 @@ function renderLessonCard(name){
     <div class="lesson-head">
       <div>
         <button class="play-btn" onclick="playLesson('${esc(name)}','${esc(lessonToCategory[name] || '')}')">▶ Play</button>
-        <button class="stop-btn" onclick="stopPlayback()">Stop</button>
       </div>
     </div>
     <div class="entries">
@@ -1239,7 +1291,6 @@ rolePlayScenarios.forEach((scenario, index) => {
       <h3>${scenario.title}</h3>
       <div>
         <button class="play-role-btn" onclick="playRolePlay(rolePlayScenarios[${index}].lines,'${esc(scenario.title)}','${esc(scenario.context)}')">▶ Play</button>
-        <button class="stop-btn" onclick="stopPlayback()">Stop</button>
       </div>
     </div>
     <p class="scenario-sub">${scenario.context}</p>
