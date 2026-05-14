@@ -296,6 +296,7 @@ let orderedLessons = [];
 let lessonOrder = {};
 let activeAutoQueue = [];
 let activeQueueIndex = 0;
+let categoryDescriptions = {};
 
 function say(text, lang, cancelFirst){
   const u = new SpeechSynthesisUtterance(text);
@@ -332,9 +333,18 @@ function stopPlayback(){
   setPlaybackStatus('Stopped');
 }
 
+function getCategoryIntro(categoryTitle){
+  if(!categoryTitle) return '';
+  const details = categoryDescriptions[categoryTitle];
+  if(details){
+    return `Now playing ${categoryTitle}. ${details}`;
+  }
+  return `Now playing ${categoryTitle}.`;
+}
+
 function playSingleLesson(list, categoryTitle, announceCategory, onComplete){
   const label = categoryTitle || 'Selected Category';
-  setPlaybackStatus(`Playing ${label}`);
+  setPlaybackStatus(`Now Playing: ${label}`);
 
   let i=0;
   function run(){
@@ -354,7 +364,7 @@ function playSingleLesson(list, categoryTitle, announceCategory, onComplete){
   }
 
   if(announceCategory && categoryTitle){
-    const intro = new SpeechSynthesisUtterance(categoryTitle);
+    const intro = new SpeechSynthesisUtterance(getCategoryIntro(categoryTitle));
     intro.lang = 'en-US';
     intro.rate = rate;
     intro.onend = () => {
@@ -399,14 +409,14 @@ function playLesson(lessonName, categoryTitle){
   activeAutoQueue = orderedLessons.filter(item => item.sectionIndex >= start.sectionIndex);
   activeQueueIndex = 0;
   playbackActive = true;
-  setPlaybackStatus(`Playing ${categoryTitle || 'Selected Category'}`);
+  setPlaybackStatus(`Starting: ${categoryTitle || 'Selected Category'}`);
   playNextQueuedLesson();
 }
 
-function playRolePlay(dialog, title){
+function playRolePlay(dialog, title, contextText){
   stopPlayback();
   playbackActive = true;
-  setPlaybackStatus(`Role Play: ${title}`);
+  setPlaybackStatus(`Now Playing Role Play: ${title}`);
 
   let i = 0;
   function run(){
@@ -430,7 +440,17 @@ function playRolePlay(dialog, title){
     }
   }
 
-  run();
+  const introText = contextText
+    ? `Now playing role play: ${title}. ${contextText}`
+    : `Now playing role play: ${title}.`;
+  const intro = new SpeechSynthesisUtterance(introText);
+  intro.lang = 'en-US';
+  intro.rate = rate;
+  intro.onend = () => {
+    if(!playbackActive) return;
+    playbackTimerB = setTimeout(run, 250);
+  };
+  window.speechSynthesis.speak(intro);
 }
 </script>
 
@@ -926,6 +946,14 @@ const lessonCategories = [
   }))
 ];
 
+categoryDescriptions = {
+  'Category: Foundations and Greetings': 'This section covers basic greetings and core starter phrases.',
+  'Category: Time, Numbers and Travel Help': 'This section covers time, counting, customs, and airport assistance phrases.',
+  'Category: Questions, Connectors and Everyday Talk': 'This section covers question words, connectors, and daily-use expressions.',
+  'Category: Airport Scenario Practice': 'This section focuses on airport movement and travel communication.',
+  'Category: Conversation Sentences': 'This section is mixed conversation practice for real interactions.'
+};
+
 orderedLessons = [];
 lessonOrder = {};
 lessonCategories.forEach((section, sectionIndex) => {
@@ -1102,7 +1130,7 @@ rolePlayScenarios.forEach((scenario, index) => {
     <div class="scenario-head">
       <h3>${scenario.title}</h3>
       <div>
-        <button class="play-role-btn" onclick="playRolePlay(rolePlayScenarios[${index}].lines,'${esc(scenario.title)}')">▶ Play</button>
+        <button class="play-role-btn" onclick="playRolePlay(rolePlayScenarios[${index}].lines,'${esc(scenario.title)}','${esc(scenario.context)}')">▶ Play</button>
         <button class="stop-btn" onclick="stopPlayback()">Stop</button>
       </div>
     </div>
