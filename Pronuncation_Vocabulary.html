@@ -5,15 +5,199 @@
 <title>Full EN-DE Trainer</title>
 
 <style>
-body { font-family: Arial; margin:20px; }
-.lesson { margin-top:40px; }
-.row { padding:6px; border-bottom:1px solid #ddd; }
-button { margin-left:5px; }
-.nav { position:fixed; right:10px; top:10px; }
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Raleway:wght@700&display=swap');
+
+:root {
+  --bg1: #fff7e8;
+  --bg2: #e7f7ff;
+  --card: #ffffff;
+  --ink: #253247;
+  --accent: #ff7f50;
+  --accent-2: #00a3a3;
+  --line: #dce7f5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 24px;
+  color: var(--ink);
+  font-family: "Nunito", "Trebuchet MS", sans-serif;
+  background:
+    radial-gradient(circle at 12% 20%, #ffe7cc 0%, transparent 35%),
+    radial-gradient(circle at 88% 15%, #d8f4ff 0%, transparent 32%),
+    linear-gradient(135deg, var(--bg1), var(--bg2));
+}
+
+h1 {
+  margin: 8px 0 4px;
+  font-family: "Raleway", "Gill Sans", sans-serif;
+  letter-spacing: 0.3px;
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  color: #4a5a72;
+}
+
+.topbar {
+  position: sticky;
+  top: 10px;
+  z-index: 30;
+  margin-left: auto;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 20px rgba(37, 50, 71, 0.08);
+}
+
+select {
+  border: 1px solid #c7d6ea;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+#lessonsContainer {
+  margin-top: 18px;
+}
+
+.category {
+  margin-bottom: 20px;
+}
+
+.category-title {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  display: inline-block;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255, 127, 80, 0.2), rgba(31, 107, 255, 0.16));
+  border: 1px solid var(--line);
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.lesson {
+  margin-top: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(20, 45, 75, 0.08);
+}
+
+.lesson-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 14px 10px;
+  background: linear-gradient(90deg, rgba(255, 127, 80, 0.16), rgba(0, 163, 163, 0.12));
+  border-bottom: 1px solid var(--line);
+}
+
+.lesson h2 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+button {
+  margin-left: 6px;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 11px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), #ff4f88);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button:hover { filter: brightness(1.06); }
+
+.play-btn {
+  background: linear-gradient(135deg, var(--accent-2), #1f6bff);
+  padding: 8px 13px;
+}
+
+.stop-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.playback-status {
+  margin-left: 4px;
+  font-size: 0.9rem;
+  color: #3f4d63;
+  font-weight: 700;
+}
+
+.entries { padding: 8px 10px 12px; }
+
+.vocab-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.vocab-table th,
+.vocab-table td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px dashed #e2eaf4;
+}
+
+.vocab-table th {
+  background: #edf6ff;
+  color: #1f4e7a;
+  font-size: 0.92rem;
+  letter-spacing: 0.2px;
+}
+
+.vocab-table tbody tr:nth-child(odd) { background: #f8fbff; }
+
+.vocab-table tbody tr:last-child td { border-bottom: none; }
+
+.speak-cell {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.speak-cell.german {
+  color: #215f95;
+}
+
+.speak-cell:empty {
+  cursor: default;
+  font-weight: 400;
+}
+
+@media (max-width: 700px) {
+  body { padding: 14px; }
+  .topbar {
+    position: static;
+    margin-bottom: 8px;
+  }
+}
 </style>
 
 <script>
 let rate = 0.9;
+let playbackActive = false;
+let playbackTimerA = null;
+let playbackTimerB = null;
 
 function speak(text, lang){
   const u = new SpeechSynthesisUtterance(text);
@@ -25,16 +209,45 @@ function speak(text, lang){
 
 function setSpeed(v){ rate = v; }
 
-function playLesson(list){
+function clearPlaybackTimers(){
+  if(playbackTimerA) clearTimeout(playbackTimerA);
+  if(playbackTimerB) clearTimeout(playbackTimerB);
+  playbackTimerA = null;
+  playbackTimerB = null;
+}
+
+function setPlaybackStatus(message){
+  const label = document.getElementById('playbackStatus');
+  if(label) label.textContent = message;
+}
+
+function stopPlayback(){
+  playbackActive = false;
+  clearPlaybackTimers();
+  window.speechSynthesis.cancel();
+  setPlaybackStatus('Stopped');
+}
+
+function playLesson(list, lessonName){
+  stopPlayback();
+  playbackActive = true;
+  setPlaybackStatus(`Playing ${lessonName}`);
+
   let i=0;
   function run(){
+    if(!playbackActive) return;
+
     if(i<list.length){
       speak(list[i][0],'en-US');
-      setTimeout(()=>{
+      playbackTimerA = setTimeout(()=>{
+        if(!playbackActive) return;
         if(list[i][1]) speak(list[i][1],'de-DE');
         i++;
-        setTimeout(run,1500);
+        playbackTimerB = setTimeout(run,1500);
       },1200);
+    } else {
+      playbackActive = false;
+      setPlaybackStatus(`Completed ${lessonName}`);
     }
   }
   run();
@@ -44,16 +257,20 @@ function playLesson(list){
 </head>
 <body>
 
-<div class="nav">
+<div class="topbar">
 Speed:
 <select onchange="setSpeed(this.value)">
 <option value="0.6">Slow</option>
 <option value="0.9" selected>Normal</option>
 <option value="1.2">Fast</option>
 </select>
+<button class="stop-btn" onclick="stopPlayback()">Stop</button>
+<span id="playbackStatus" class="playback-status">Idle</span>
 </div>
 
 <h1>English ⇄ German FULL Trainer</h1>
+<p class="subtitle">Practice vocabulary with colorful lesson cards and one-tap pronunciation. Total entries: <strong id="totalCount">0</strong></p>
+<div id="lessonsContainer"></div>
 
 <!-- ================= DATA SECTION ================= -->
 
@@ -250,27 +467,339 @@ const lessons = {
 ]
 
 };
+
+const immigrantEssentialTerms = {
+  "Housing and Utilities": [
+    ["rent", "Miete"],
+    ["rental contract", "Mietvertrag"],
+    ["landlord", "Vermieter"],
+    ["deposit", "Kaution"],
+    ["apartment", "Wohnung"],
+    ["room", "Zimmer"],
+    ["house rules", "Hausordnung"],
+    ["heating", "Heizung"],
+    ["electricity", "Strom"],
+    ["water bill", "Wasserrechnung"],
+    ["internet", "Internet"],
+    ["mailbox", "Briefkasten"],
+    ["key", "Schluessel"],
+    ["doorbell", "Klingel"],
+    ["moving date", "Umzugstermin"],
+    ["furniture", "Moebel"],
+    ["washing machine", "Waschmaschine"],
+    ["repair", "Reparatur"],
+    ["garbage collection", "Muellabfuhr"],
+    ["tenant registration", "Meldung als Mieter"]
+  ],
+  "Work and Jobs": [
+    ["job interview", "Vorstellungsgespraech"],
+    ["resume", "Lebenslauf"],
+    ["work permit", "Arbeitserlaubnis"],
+    ["employment contract", "Arbeitsvertrag"],
+    ["salary", "Gehalt"],
+    ["tax class", "Steuerklasse"],
+    ["payslip", "Lohnabrechnung"],
+    ["overtime", "Ueberstunden"],
+    ["vacation days", "Urlaubstage"],
+    ["sick leave", "Krankmeldung"],
+    ["colleague", "Kollege"],
+    ["manager", "Vorgesetzter"],
+    ["shift", "Schicht"],
+    ["part time job", "Teilzeitjob"],
+    ["full time job", "Vollzeitjob"],
+    ["job center", "Jobcenter"],
+    ["application", "Bewerbung"],
+    ["reference", "Arbeitszeugnis"],
+    ["probation period", "Probezeit"],
+    ["training course", "Fortbildung"]
+  ],
+  "Health and Medical": [
+    ["health insurance", "Krankenversicherung"],
+    ["insurance card", "Versicherungskarte"],
+    ["doctor appointment", "Arzttermin"],
+    ["family doctor", "Hausarzt"],
+    ["pharmacy", "Apotheke"],
+    ["prescription", "Rezept"],
+    ["medicine", "Medikament"],
+    ["emergency room", "Notaufnahme"],
+    ["ambulance", "Krankenwagen"],
+    ["vaccination", "Impfung"],
+    ["pain", "Schmerzen"],
+    ["allergy", "Allergie"],
+    ["fever", "Fieber"],
+    ["cough", "Husten"],
+    ["dental clinic", "Zahnarztpraxis"],
+    ["eye test", "Sehtest"],
+    ["hospital", "Krankenhaus"],
+    ["medical certificate", "Attest"],
+    ["blood test", "Bluttest"],
+    ["mental health support", "Psychologische Hilfe"]
+  ],
+  "Transport and Commuting": [
+    ["bus stop", "Bushaltestelle"],
+    ["train station", "Bahnhof"],
+    ["subway", "U Bahn"],
+    ["tram", "Strassenbahn"],
+    ["ticket machine", "Fahrkartenautomat"],
+    ["monthly pass", "Monatskarte"],
+    ["platform", "Bahnsteig"],
+    ["delay", "Verspaetung"],
+    ["route", "Strecke"],
+    ["transfer", "Umstieg"],
+    ["bicycle", "Fahrrad"],
+    ["driver license", "Fuehrerschein"],
+    ["car registration", "Fahrzeugzulassung"],
+    ["parking permit", "Parkausweis"],
+    ["traffic fine", "Strafzettel"],
+    ["airport terminal", "Flughafenterminal"],
+    ["taxi", "Taxi"],
+    ["ride sharing", "Mitfahrgelegenheit"],
+    ["navigation app", "Navigations App"],
+    ["commute time", "Pendelzeit"]
+  ],
+  "Shopping and Food": [
+    ["supermarket", "Supermarkt"],
+    ["discount store", "Discounter"],
+    ["shopping cart", "Einkaufswagen"],
+    ["cash register", "Kasse"],
+    ["receipt", "Kassenbon"],
+    ["price", "Preis"],
+    ["discount", "Rabatt"],
+    ["fresh vegetables", "Frisches Gemuese"],
+    ["bread", "Brot"],
+    ["milk", "Milch"],
+    ["rice", "Reis"],
+    ["cooking oil", "Speiseoel"],
+    ["halal food", "Halal Essen"],
+    ["vegetarian option", "Vegetarische Option"],
+    ["allergen information", "Allergen Information"],
+    ["food market", "Wochenmarkt"],
+    ["delivery", "Lieferung"],
+    ["online order", "Online Bestellung"],
+    ["return item", "Rueckgabe"],
+    ["customer service", "Kundenservice"]
+  ],
+  "Government and Documents": [
+    ["passport", "Reisepass"],
+    ["residence permit", "Aufenthaltserlaubnis"],
+    ["visa extension", "Visa Verlaengerung"],
+    ["registration office", "Buergeramt"],
+    ["registration certificate", "Meldebescheinigung"],
+    ["appointment", "Termin"],
+    ["queue number", "Wartenummer"],
+    ["document copy", "Dokumentenkopie"],
+    ["translation", "Uebersetzung"],
+    ["certified translation", "Beglaubigte Uebersetzung"],
+    ["birth certificate", "Geburtsurkunde"],
+    ["marriage certificate", "Heiratsurkunde"],
+    ["tax office", "Finanzamt"],
+    ["social security number", "Sozialversicherungsnummer"],
+    ["police registration", "Polizeiliche Anmeldung"],
+    ["integration course", "Integrationskurs"],
+    ["language certificate", "Sprachzertifikat"],
+    ["official letter", "Behoerdenbrief"],
+    ["deadline", "Frist"],
+    ["application form", "Antragsformular"]
+  ],
+  "School and Family": [
+    ["kindergarten", "Kindergarten"],
+    ["school enrollment", "Schulanmeldung"],
+    ["parent teacher meeting", "Elterngespraech"],
+    ["homework", "Hausaufgaben"],
+    ["school supplies", "Schulmaterial"],
+    ["notebook", "Heft"],
+    ["textbook", "Lehrbuch"],
+    ["school bus", "Schulbus"],
+    ["childcare", "Kinderbetreuung"],
+    ["after school program", "Nachmittagsbetreuung"],
+    ["vaccination record", "Impfnachweis"],
+    ["report card", "Zeugnis"],
+    ["attendance", "Anwesenheit"],
+    ["absence note", "Entschuldigung"],
+    ["family benefits", "Familienleistungen"],
+    ["child benefit", "Kindergeld"],
+    ["playground", "Spielplatz"],
+    ["pediatrician", "Kinderarzt"],
+    ["school lunch", "Schulessen"],
+    ["language support class", "Sprachfoerderkurs"]
+  ],
+  "Banking and Money": [
+    ["bank account", "Bankkonto"],
+    ["debit card", "EC Karte"],
+    ["online banking", "Online Banking"],
+    ["bank statement", "Kontoauszug"],
+    ["cash withdrawal", "Bargeldabhebung"],
+    ["money transfer", "Ueberweisung"],
+    ["standing order", "Dauerauftrag"],
+    ["rent payment", "Mietzahlung"],
+    ["utility bill", "Nebenkostenrechnung"],
+    ["monthly budget", "Monatsbudget"],
+    ["savings", "Ersparnisse"],
+    ["loan", "Kredit"],
+    ["interest rate", "Zinssatz"],
+    ["cash", "Bargeld"],
+    ["change", "Wechselgeld"],
+    ["payment reminder", "Zahlungserinnerung"],
+    ["late fee", "Mahngebuehr"],
+    ["insurance payment", "Versicherungsbeitrag"],
+    ["mobile payment", "Mobiles Bezahlen"],
+    ["currency exchange", "Geldwechsel"]
+  ],
+  "Communication and Daily Services": [
+    ["mobile phone", "Handy"],
+    ["sim card", "SIM Karte"],
+    ["phone plan", "Handytarif"],
+    ["internet provider", "Internetanbieter"],
+    ["postal office", "Post"],
+    ["parcel", "Paket"],
+    ["delivery tracking", "Sendungsverfolgung"],
+    ["email", "E Mail"],
+    ["password", "Passwort"],
+    ["customer hotline", "Kundenhotline"],
+    ["appointment confirmation", "Terminbestaetigung"],
+    ["public library", "Stadtbibliothek"],
+    ["community center", "Gemeindezentrum"],
+    ["language exchange", "Sprachtandem"],
+    ["volunteer work", "Ehrenamt"],
+    ["religious center", "Gebetszentrum"],
+    ["legal advice", "Rechtsberatung"],
+    ["support group", "Selbsthilfegruppe"],
+    ["translation app", "Uebersetzungs App"],
+    ["emergency contact", "Notfallkontakt"]
+  ]
+};
+
+const immigrantTemplates = [
+  ["I need {en}", "Ich brauche {de}"],
+  ["I am looking for {en}", "Ich suche {de}"],
+  ["Where can I find {en}", "Wo finde ich {de}"],
+  ["Do you have {en}", "Haben Sie {de}"]
+];
+
+const generatedLessonGroups = {};
+let generatedLessonIndex = 1;
+
+Object.entries(immigrantEssentialTerms).forEach(([topic, terms]) => {
+  const expandedRows = [];
+
+  terms.forEach(([en, de]) => {
+    expandedRows.push([en, de]);
+
+    immigrantTemplates.forEach(([enTemplate, deTemplate]) => {
+      expandedRows.push([
+        enTemplate.replace('{en}', en),
+        deTemplate.replace('{de}', de)
+      ]);
+    });
+  });
+
+  const lessonNames = [];
+  const chunkSize = 50;
+  for(let i = 0; i < expandedRows.length; i += chunkSize){
+    const lessonName = `Immigrant Essentials ${String(generatedLessonIndex).padStart(2, '0')}`;
+    lessons[lessonName] = expandedRows.slice(i, i + chunkSize);
+    lessonNames.push(lessonName);
+    generatedLessonIndex++;
+  }
+
+  generatedLessonGroups[topic] = lessonNames;
+});
 </script>
 
 <!-- ================= RENDER ================= -->
 
 <script>
-Object.keys(lessons).forEach(name => {
-  document.body.innerHTML += `<div class="lesson">
-  <h2>${name}</h2>
-  <button onclick="playLesson(lessons['${name}'])">▶ Play Lesson</button>
-  <div id="${name}"></div>
-  </div>`;
+const container = document.getElementById('lessonsContainer');
+const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+const lessonCategories = [
+  {
+    title: 'Category: Foundations and Greetings',
+    lessons: ['Lesson 1.6']
+  },
+  {
+    title: 'Category: Time, Numbers and Travel Help',
+    lessons: ['Lesson 1.7']
+  },
+  {
+    title: 'Category: Questions, Connectors and Everyday Talk',
+    lessons: ['Lesson 1.8']
+  },
+  {
+    title: 'Category: Airport Scenario Practice',
+    lessons: ['Lesson 1.9']
+  },
+  {
+    title: 'Category: Conversation Sentences',
+    lessons: ['Lesson 1.10']
+  },
+  ...Object.entries(generatedLessonGroups).map(([topic, lessonList]) => ({
+    title: `Category: ${topic}`,
+    lessons: lessonList
+  }))
+];
 
-  lessons[name].forEach(p=>{
-    document.getElementById(name).innerHTML += `
-    <div class="row">
-      ${p[0]} 
-      <button onclick="speak('${p[0]}','en-US')">EN</button>
-      ${p[1] ? `— ${p[1]} <button onclick="speak('${p[1]}','de-DE')">DE</button>` : ''}
-    </div>`;
-  });
+const totalEntries = Object.values(lessons).reduce((sum, list) => sum + list.length, 0);
+const totalCountNode = document.getElementById('totalCount');
+if(totalCountNode) totalCountNode.textContent = totalEntries;
+
+function renderLessonCard(name){
+  const lessonEntries = lessons[name].map((p) => {
+    const enCell = `<td class="speak-cell english" onclick="speak('${esc(p[0])}','en-US')">${p[0]}</td>`;
+    const deCell = p[1]
+      ? `<td class="speak-cell german" onclick="speak('${esc(p[1])}','de-DE')">${p[1]}</td>`
+      : '<td></td>';
+
+    return `<tr>${enCell}${deCell}</tr>`;
+  }).join('');
+
+  return `
+  <div class="lesson">
+    <div class="lesson-head">
+      <h2>${name}</h2>
+      <div>
+        <button class="play-btn" onclick="playLesson(lessons['${esc(name)}'],'${esc(name)}')">▶ Play</button>
+        <button class="stop-btn" onclick="stopPlayback()">Stop</button>
+      </div>
+    </div>
+    <div class="entries">
+      <table class="vocab-table">
+        <thead>
+          <tr>
+            <th>English</th>
+            <th>German</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lessonEntries}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+lessonCategories.forEach((section) => {
+  const cards = section.lessons
+    .filter(name => lessons[name])
+    .map(name => renderLessonCard(name))
+    .join('');
+
+  if(cards){
+    container.innerHTML += `
+    <section class="category">
+      <h3 class="category-title">${section.title}</h3>
+      <div class="category-grid">${cards}</div>
+    </section>`;
+  }
 });
+
+const uncategorized = Object.keys(lessons).filter(name => !lessonCategories.some(cat => cat.lessons.includes(name)));
+if(uncategorized.length){
+  container.innerHTML += `
+  <section class="category">
+    <h3 class="category-title">Category: More Practice</h3>
+    <div class="category-grid">${uncategorized.map(name => renderLessonCard(name)).join('')}</div>
+  </section>`;
+}
 </script>
 
 </body>
