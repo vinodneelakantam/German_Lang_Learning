@@ -349,6 +349,7 @@ let lessonOrder = {};
 let activeAutoQueue = [];
 let activeQueueIndex = 0;
 let categoryDescriptions = {};
+let autoPlayNextCategories = true;
 
 function say(text, lang, cancelFirst){
   const u = new SpeechSynthesisUtterance(text);
@@ -374,6 +375,10 @@ function clearPlaybackTimers(){
 function setPlaybackStatus(message){
   const label = document.getElementById('playbackStatus');
   if(label) label.textContent = message;
+}
+
+function setAutoPlayNext(enabled){
+  autoPlayNextCategories = !!enabled;
 }
 
 function stopPlayback(){
@@ -479,10 +484,13 @@ function playLesson(lessonName, categoryTitle){
     return;
   }
 
-  activeAutoQueue = orderedLessons.filter(item => item.sectionIndex >= start.sectionIndex);
+  activeAutoQueue = autoPlayNextCategories
+    ? orderedLessons.filter(item => item.sectionIndex >= start.sectionIndex)
+    : orderedLessons.filter(item => item.sectionIndex === start.sectionIndex);
   activeQueueIndex = 0;
   playbackActive = true;
-  setPlaybackStatus(`Starting: ${categoryTitle || 'Selected Category'}`);
+  const mode = autoPlayNextCategories ? 'Auto' : 'Single Category';
+  setPlaybackStatus(`Starting (${mode}): ${categoryTitle || 'Selected Category'}`);
   playNextQueuedLesson();
 }
 
@@ -541,6 +549,10 @@ Speed:
 <option value="0.9" selected>Normal</option>
 <option value="1.2">Fast</option>
 </select>
+<label style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#36506e;">
+<input type="checkbox" checked onchange="setAutoPlayNext(this.checked)">
+Auto Next Categories
+</label>
 <button class="stop-btn" onclick="stopPlayback()">Stop</button>
 <span id="playbackStatus" class="playback-status">Idle</span>
 </div>
