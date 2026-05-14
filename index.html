@@ -292,6 +292,10 @@ let rate = 0.9;
 let playbackActive = false;
 let playbackTimerA = null;
 let playbackTimerB = null;
+let orderedLessons = [];
+let lessonOrder = {};
+let activeAutoQueue = [];
+let activeQueueIndex = 0;
 
 function say(text, lang, cancelFirst){
   const u = new SpeechSynthesisUtterance(text);
@@ -322,13 +326,13 @@ function setPlaybackStatus(message){
 function stopPlayback(){
   playbackActive = false;
   clearPlaybackTimers();
+  activeAutoQueue = [];
+  activeQueueIndex = 0;
   window.speechSynthesis.cancel();
   setPlaybackStatus('Stopped');
 }
 
-function playLesson(list, categoryTitle){
-  stopPlayback();
-  playbackActive = true;
+function playSingleLesson(list, categoryTitle, announceCategory, onComplete){
   const label = categoryTitle || 'Selected Category';
   setPlaybackStatus(`Playing ${label}`);
 
@@ -345,12 +349,11 @@ function playLesson(list, categoryTitle){
         playbackTimerB = setTimeout(run,1500);
       },1200);
     } else {
-      playbackActive = false;
-      setPlaybackStatus(`Completed ${label}`);
+      if(onComplete) onComplete();
     }
   }
 
-  if(categoryTitle){
+  if(announceCategory && categoryTitle){
     const intro = new SpeechSynthesisUtterance(categoryTitle);
     intro.lang = 'en-US';
     intro.rate = rate;
@@ -362,6 +365,42 @@ function playLesson(list, categoryTitle){
   } else {
     playbackTimerB = setTimeout(run, 0);
   }
+}
+
+function playNextQueuedLesson(){
+  if(!playbackActive) return;
+
+  if(activeQueueIndex >= activeAutoQueue.length){
+    playbackActive = false;
+    setPlaybackStatus('Completed all categories');
+    return;
+  }
+
+  const item = activeAutoQueue[activeQueueIndex];
+  const previous = activeAutoQueue[activeQueueIndex - 1];
+  const announceCategory = !previous || previous.sectionIndex !== item.sectionIndex;
+
+  playSingleLesson(item.list, item.categoryTitle, announceCategory, () => {
+    if(!playbackActive) return;
+    activeQueueIndex++;
+    playNextQueuedLesson();
+  });
+}
+
+function playLesson(lessonName, categoryTitle){
+  stopPlayback();
+
+  const start = lessonOrder[lessonName];
+  if(!start){
+    setPlaybackStatus('Could not start playback');
+    return;
+  }
+
+  activeAutoQueue = orderedLessons.filter(item => item.sectionIndex >= start.sectionIndex);
+  activeQueueIndex = 0;
+  playbackActive = true;
+  setPlaybackStatus(`Playing ${categoryTitle || 'Selected Category'}`);
+  playNextQueuedLesson();
 }
 
 function playRolePlay(dialog, title){
@@ -887,6 +926,23 @@ const lessonCategories = [
   }))
 ];
 
+orderedLessons = [];
+lessonOrder = {};
+lessonCategories.forEach((section, sectionIndex) => {
+  section.lessons
+    .filter(name => lessons[name])
+    .forEach((lessonName) => {
+      const item = {
+        lessonName,
+        categoryTitle: section.title,
+        list: lessons[lessonName],
+        sectionIndex
+      };
+      orderedLessons.push(item);
+      lessonOrder[lessonName] = item;
+    });
+});
+
 const lessonToCategory = {};
 lessonCategories.forEach((section) => {
   section.lessons.forEach((lessonName) => {
@@ -987,7 +1043,7 @@ function renderLessonCard(name){
   <div class="lesson">
     <div class="lesson-head">
       <div>
-        <button class="play-btn" onclick="playLesson(lessons['${esc(name)}'],'${esc(lessonToCategory[name] || '')}')">▶ Play</button>
+        <button class="play-btn" onclick="playLesson('${esc(name)}','${esc(lessonToCategory[name] || '')}')">▶ Play</button>
         <button class="stop-btn" onclick="stopPlayback()">Stop</button>
       </div>
     </div>
