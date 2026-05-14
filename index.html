@@ -326,29 +326,35 @@ function stopPlayback(){
   setPlaybackStatus('Stopped');
 }
 
-function playLesson(list, lessonName){
+function playLesson(list, lessonName, categoryTitle){
   stopPlayback();
   playbackActive = true;
-  setPlaybackStatus(`Playing ${lessonName}`);
+  const label = categoryTitle ? `${categoryTitle} • ${lessonName}` : lessonName;
+  setPlaybackStatus(`Playing ${label}`);
+
+  if(categoryTitle){
+    say(`Category ${categoryTitle}`, 'en-US', false);
+  }
 
   let i=0;
   function run(){
     if(!playbackActive) return;
 
     if(i<list.length){
-      speak(list[i][0],'en-US');
+      say(list[i][0], 'en-US', false);
       playbackTimerA = setTimeout(()=>{
         if(!playbackActive) return;
-        if(list[i][1]) speak(list[i][1],'de-DE');
+        if(list[i][1]) say(list[i][1], 'de-DE', false);
         i++;
         playbackTimerB = setTimeout(run,1500);
       },1200);
     } else {
       playbackActive = false;
-      setPlaybackStatus(`Completed ${lessonName}`);
+      setPlaybackStatus(`Completed ${label}`);
     }
   }
-  run();
+
+  playbackTimerB = setTimeout(run, categoryTitle ? 1200 : 0);
 }
 
 function playRolePlay(dialog, title){
@@ -874,6 +880,13 @@ const lessonCategories = [
   }))
 ];
 
+const lessonToCategory = {};
+lessonCategories.forEach((section) => {
+  section.lessons.forEach((lessonName) => {
+    lessonToCategory[lessonName] = section.title.replace('Category: ', '');
+  });
+});
+
 const totalEntries = Object.values(lessons).reduce((sum, list) => sum + list.length, 0);
 const totalCountNode = document.getElementById('totalCount');
 if(totalCountNode) totalCountNode.textContent = totalEntries;
@@ -967,7 +980,7 @@ function renderLessonCard(name){
   <div class="lesson">
     <div class="lesson-head">
       <div>
-        <button class="play-btn" onclick="playLesson(lessons['${esc(name)}'],'${esc(name)}')">▶ Play</button>
+        <button class="play-btn" onclick="playLesson(lessons['${esc(name)}'],'${esc(name)}','${esc(lessonToCategory[name] || '')}')">▶ Play</button>
         <button class="stop-btn" onclick="stopPlayback()">Stop</button>
       </div>
     </div>
