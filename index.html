@@ -326,10 +326,10 @@ function stopPlayback(){
   setPlaybackStatus('Stopped');
 }
 
-function playLesson(list, lessonName, categoryTitle){
+function playLesson(list, categoryTitle){
   stopPlayback();
   playbackActive = true;
-  const label = categoryTitle || lessonName;
+  const label = categoryTitle || 'Selected Category';
   setPlaybackStatus(`Playing ${label}`);
 
   let i=0;
@@ -987,7 +987,7 @@ function renderLessonCard(name){
   <div class="lesson">
     <div class="lesson-head">
       <div>
-        <button class="play-btn" onclick="playLesson(lessons['${esc(name)}'],'${esc(name)}','${esc(lessonToCategory[name] || '')}')">▶ Play</button>
+        <button class="play-btn" onclick="playLesson(lessons['${esc(name)}'],'${esc(lessonToCategory[name] || '')}')">▶ Play</button>
         <button class="stop-btn" onclick="stopPlayback()">Stop</button>
       </div>
     </div>
