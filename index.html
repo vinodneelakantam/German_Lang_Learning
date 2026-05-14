@@ -30,6 +30,11 @@ body {
     linear-gradient(135deg, var(--bg1), var(--bg2));
 }
 
+.main-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
 h1 {
   margin: 8px 0 4px;
   font-family: "Raleway", "Gill Sans", sans-serif;
@@ -39,6 +44,10 @@ h1 {
 .subtitle {
   margin: 0 0 18px;
   color: #4a5a72;
+}
+
+.subtitle.compact {
+  margin: 6px 0 12px;
 }
 
 .topbar {
@@ -73,6 +82,7 @@ select {
 
 .category {
   margin-bottom: 20px;
+  scroll-margin-top: 88px;
 }
 
 .category-title {
@@ -88,6 +98,43 @@ select {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 18px;
+}
+
+.category-note {
+  margin: 0 0 10px;
+  color: #4b5f79;
+  font-size: 0.95rem;
+}
+
+.topic-preface {
+  margin: 8px 0 18px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 20px rgba(20, 45, 75, 0.06);
+}
+
+.topic-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.jump-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: #174a78;
+  font-weight: 800;
+  border: 1px solid #cfe0f4;
+  background: #f7fbff;
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+
+.jump-link:hover {
+  background: #eef7ff;
 }
 
 .lesson {
@@ -191,6 +238,7 @@ button:hover { filter: brightness(1.06); }
 }
 
 .vocab-table tbody tr:nth-child(odd) { background: #f8fbff; }
+.vocab-table tbody tr:hover { background: #eaf6ff; }
 
 .vocab-table tbody tr:last-child td { border-bottom: none; }
 
@@ -276,6 +324,10 @@ button:hover { filter: brightness(1.06); }
 
 .dialog-table tbody tr:nth-child(odd) {
   background: #f9fbff;
+}
+
+.dialog-table tbody tr:hover {
+  background: #eaf6ff;
 }
 
 @media (max-width: 700px) {
@@ -475,6 +527,8 @@ function playRolePlay(dialog, title, contextText){
 </head>
 <body>
 
+<main class="main-shell">
+
 <div class="signature">
   <strong>Vinod Kumar Neelakantam</strong>
   <a href="https://www.linkedin.com/in/vinodneelakantam/" target="_blank" rel="noopener">linkedin.com/in/vinodneelakantam</a>
@@ -493,8 +547,17 @@ Speed:
 
 <h1>SprichDeutsch <span style="font-weight:400;font-size:0.75em;color:#4a5a72;">— Speak German</span></h1>
 <p class="subtitle">Click any word to hear it. Use Play to run a full category. Total entries: <strong id="totalCount">0</strong></p>
+
+<section class="topic-preface">
+  <h2 class="section-title">Start Here</h2>
+  <p class="subtitle compact">Jump quickly to any category or role play scenario.</p>
+  <div id="topicPrefaceLinks" class="topic-links"></div>
+  <p class="subtitle compact">Role Play Shortcuts:</p>
+  <div id="rolePlayPrefaceLinks" class="topic-links"></div>
+</section>
+
 <div id="lessonsContainer"></div>
-<h2 class="section-title">Role Play Scenarios</h2>
+<h2 id="role-play-scenarios" class="section-title">Role Play Scenarios</h2>
 <p class="subtitle">Play practical conversations for daily immigrant and tourist situations.</p>
 <div id="rolePlayContainer" class="scenario-grid"></div>
 
@@ -936,7 +999,10 @@ Object.entries(immigrantEssentialTerms).forEach(([topic, terms]) => {
 
 <script>
 const container = document.getElementById('lessonsContainer');
+const topicPrefaceLinks = document.getElementById('topicPrefaceLinks');
+const rolePlayPrefaceLinks = document.getElementById('rolePlayPrefaceLinks');
 const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+const slugify = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const lessonCategories = [
   {
     title: 'Category: Foundations and Greetings',
@@ -1116,9 +1182,18 @@ lessonCategories.forEach((section) => {
     .join('');
 
   if(cards){
+    const sectionId = `cat-${slugify(section.title)}`;
+    const sectionCount = section.lessons
+      .filter(name => lessons[name])
+      .reduce((sum, lessonName) => sum + lessons[lessonName].length, 0);
+    const sectionNote = categoryDescriptions[section.title] || 'Practical vocabulary practice for everyday communication.';
+
+    topicPrefaceLinks.innerHTML += `<a class="jump-link" href="#${sectionId}">${section.title} (${sectionCount})</a>`;
+
     container.innerHTML += `
-    <section class="category">
+    <section id="${sectionId}" class="category">
       <h3 class="category-title">${section.title}</h3>
+      <p class="category-note">${sectionNote}</p>
       <div class="category-grid">${cards}</div>
     </section>`;
   }
@@ -1135,6 +1210,9 @@ if(uncategorized.length){
 
 const rolePlayContainer = document.getElementById('rolePlayContainer');
 rolePlayScenarios.forEach((scenario, index) => {
+  const scenarioId = `scenario-${slugify(scenario.title)}`;
+  rolePlayPrefaceLinks.innerHTML += `<a class="jump-link" href="#${scenarioId}">${scenario.title}</a>`;
+
   const rows = scenario.lines.map((line) => {
     const en = line[0] || '';
     const de = line[1] || '';
@@ -1144,7 +1222,7 @@ rolePlayScenarios.forEach((scenario, index) => {
   }).join('');
 
   rolePlayContainer.innerHTML += `
-  <article class="scenario-card">
+  <article id="${scenarioId}" class="scenario-card">
     <div class="scenario-head">
       <h3>${scenario.title}</h3>
       <div>
@@ -1167,6 +1245,8 @@ rolePlayScenarios.forEach((scenario, index) => {
   </article>`;
 });
 </script>
+
+</main>
 
 </body>
 </html>
