@@ -337,9 +337,34 @@ function getCategoryIntro(categoryTitle){
   if(!categoryTitle) return '';
   const details = categoryDescriptions[categoryTitle];
   if(details){
-    return `Now playing ${categoryTitle}. ${details}`;
+    return `You are in ${categoryTitle}. Under this topic, you will practice English and German vocabulary for daily life. ${details}`;
   }
-  return `Now playing ${categoryTitle}.`;
+  return `You are in ${categoryTitle}. Under this topic, you will practice English and German vocabulary for daily life.`;
+}
+
+function speakIntroThen(introText, startPlayback){
+  if(!introText){
+    startPlayback();
+    return;
+  }
+
+  let finished = false;
+  const finishOnce = () => {
+    if(finished || !playbackActive) return;
+    finished = true;
+    startPlayback();
+  };
+
+  const intro = new SpeechSynthesisUtterance(introText);
+  intro.lang = 'en-US';
+  intro.rate = rate;
+  intro.onend = finishOnce;
+  intro.onerror = finishOnce;
+  window.speechSynthesis.speak(intro);
+
+  const words = introText.trim().split(/\s+/).filter(Boolean).length;
+  const estimatedMs = Math.max(1800, Math.min(9000, words * 420));
+  playbackTimerB = setTimeout(finishOnce, estimatedMs);
 }
 
 function playSingleLesson(list, categoryTitle, announceCategory, onComplete){
@@ -364,14 +389,10 @@ function playSingleLesson(list, categoryTitle, announceCategory, onComplete){
   }
 
   if(announceCategory && categoryTitle){
-    const intro = new SpeechSynthesisUtterance(getCategoryIntro(categoryTitle));
-    intro.lang = 'en-US';
-    intro.rate = rate;
-    intro.onend = () => {
+    speakIntroThen(getCategoryIntro(categoryTitle), () => {
       if(!playbackActive) return;
       playbackTimerB = setTimeout(run, 250);
-    };
-    window.speechSynthesis.speak(intro);
+    });
   } else {
     playbackTimerB = setTimeout(run, 0);
   }
@@ -441,16 +462,13 @@ function playRolePlay(dialog, title, contextText){
   }
 
   const introText = contextText
-    ? `Now playing role play: ${title}. ${contextText}`
-    : `Now playing role play: ${title}.`;
-  const intro = new SpeechSynthesisUtterance(introText);
-  intro.lang = 'en-US';
-  intro.rate = rate;
-  intro.onend = () => {
+    ? `You are in Role Play Scenarios. Play practical conversations for daily immigrant and tourist situations. Now playing ${title}. ${contextText}`
+    : `You are in Role Play Scenarios. Now playing ${title}.`;
+
+  speakIntroThen(introText, () => {
     if(!playbackActive) return;
     playbackTimerB = setTimeout(run, 250);
-  };
-  window.speechSynthesis.speak(intro);
+  });
 }
 </script>
 
