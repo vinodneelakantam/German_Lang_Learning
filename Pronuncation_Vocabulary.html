@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Full EN-DE Trainer</title>
+
+<style>
+body { font-family: Arial; margin:20px; }
+.lesson { margin-top:40px; }
+.row { padding:6px; border-bottom:1px solid #ddd; }
+button { margin-left:5px; }
+.nav { position:fixed; right:10px; top:10px; }
+</style>
+
+<script>
+let rate = 0.9;
+
+function speak(text, lang){
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  u.rate = rate;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
+function setSpeed(v){ rate = v; }
+
+function playLesson(list){
+  let i=0;
+  function run(){
+    if(i<list.length){
+      speak(list[i][0],'en-US');
+      setTimeout(()=>{
+        if(list[i][1]) speak(list[i][1],'de-DE');
+        i++;
+        setTimeout(run,1500);
+      },1200);
+    }
+  }
+  run();
+}
+</script>
+
+</head>
+<body>
+
+<div class="nav">
+Speed:
+<select onchange="setSpeed(this.value)">
+<option value="0.6">Slow</option>
+<option value="0.9" selected>Normal</option>
+<option value="1.2">Fast</option>
+</select>
+</div>
+
+<h1>English ⇄ German FULL Trainer</h1>
+
+<!-- ================= DATA SECTION ================= -->
+
+<script>
+const lessons = {
+
+"Lesson 1.6": [
+["good morning","Guten Morgen"],
+["good evening","Guten Abend"],
+["good afternoon","Guten Nachmittag"],
+["good night","Gute Nacht"],
+["a man","ein Mann"],
+["a woman","eine Frau"],
+["a wife","eine Ehefrau"],
+["a husband","ein Ehemann"],
+["a child","ein Kind"],
+["two children","zwei Kinder"],
+["to be","sein"],
+["I am","ich bin"],
+["you are","du bist / ihr seid"],
+["he is","er ist"],
+["she is","sie ist"],
+["it is","es ist"],
+["we are","wir sind"],
+["they are","sie sind"],
+["I'm happy","ich bin glücklich"],
+["I'm sorry","es tut mir leid"],
+["I'm confused","ich bin durcheinander"],
+["I'm glad","ich bin froh"],
+["a plane","ein Flugzeug"],
+["a trip","eine Reise"],
+["an airport","ein Flughafen"],
+["attention","Achtung"],
+["to arrive","ankommen"],
+["we arrive","wir kommen an"],
+["to depart","abfliegen"],
+["we depart","wir fliegen ab"],
+["to ask","fragen"],
+["Let's ask","Fragen wir"],
+["Let's go","Gehen wir"],
+["to answer","antworten"],
+["all right","in Ordnung"],
+["please","bitte"],
+["thank you","danke"],
+["thank you very much","vielen Dank"],
+["information desk","Informationsschalter"],
+["sign","Zeichen"],
+["a loudspeaker","ein Lautsprecher"],
+["on the right","rechts"],
+["on the left","links"],
+["the way","der Weg"],
+["a passer-by","ein Passant"],
+["to know","wissen"],
+["I don't know","ich weiß nicht"],
+["to see","sehen"],
+["I don't see","ich sehe nicht"]
+],
+
+"Lesson 1.7": [
+["in the morning","morgens"],
+["in the afternoon","nachmittags"],
+["in the evening","abends"],
+["to come","kommen"],
+["a man comes","ein Mann kommt"],
+["to approach","sich nähern"],
+["a woman approaches","eine Frau kommt näher"],
+["one two three","eins zwei drei"],
+["four five six","vier fünf sechs"],
+["seven eight nine","sieben acht neun"],
+["ten eleven twelve","zehn elf zwölf"],
+["one hour","eine Stunde"],
+["two days","zwei Tage"],
+["three weeks","drei Wochen"],
+["one second","eine Sekunde"],
+["ten minutes","zehn Minuten"],
+["fifty years","fünfzig Jahre"],
+["the customs","der Zoll"],
+["at the customs","beim Zoll"],
+["the customs officer","der Zollbeamte"],
+["to meet","treffen"],
+["You meet a child","Du triffst ein Kind"],
+["to wait","warten"],
+["Wait a minute","Warte eine Minute"],
+["no alcohol","kein Alkohol"],
+["no cigarettes","keine Zigaretten"],
+["no chocolate","keine Schokolade"],
+["my passport","mein Pass"],
+["my pockets","meine Taschen"],
+["the counter","der Schalter"],
+["the lounge","die Wartehalle"],
+["name","Name"],
+["my name is","ich heiße"],
+["right","richtig"],
+["wrong","falsch"],
+["It's the wrong way","Es ist der falsche Weg"],
+["perhaps","vielleicht"],
+["Perhaps we find it","Vielleicht finden wir es"],
+["certainly","sicherlich"],
+["Certainly we can show you the way","Sicherlich können wir dir den Weg zeigen"],
+["holidays","Ferien"],
+["Enjoy your holidays","Genieße deine Ferien"],
+["luggage","das Gepäck"],
+["a trolley","ein Wagen"],
+["two bags","zwei Taschen"],
+["to help","helfen"],
+["Can I help you","Kann ich Ihnen helfen"],
+["to hear","hören"],
+["We hear our names","Wir hören unsere Namen"],
+["to listen","zuhören"],
+["Listen our names","Horch unsere Namen"]
+],
+
+"Lesson 1.8": [
+["to look","schauen"],
+["Look our bags","Schau unsere Taschen"],
+["but","aber"],
+["But no alcohol please","Aber keinen Alkohol bitte"],
+["and","und"],
+["a man and a woman","ein Mann und eine Frau"],
+["or","oder"],
+["cigarettes or chocolate","Zigaretten oder Schokolade"],
+["to have","haben"],
+["I have a car","Ich habe ein Auto"],
+["You have two bags","Du hast zwei Taschen"],
+["He has three trolleys","Er hat drei Karren"],
+["She has four pockets","Sie hat vier Taschen"],
+["We have ten cigarettes","Wir haben zehn Zigaretten"],
+["You have an idea","Du hast eine Idee"],
+["They have five kiosks","Sie haben fünf Kioske"],
+["What's the matter","Was ist los"],
+["outside","draußen"],
+["They wait outside","Sie warten draußen"],
+["something","etwas"],
+["I see something","Ich sehe etwas"],
+["today","heute"],
+["tomorrow","morgen"],
+["What","Was"],
+["What's your name","Wie heißt du"],
+["Who","Wer"],
+["Who is this woman","Wer ist diese Frau"],
+["Where","Wo"],
+["Where is the airport","Wo ist der Flugplatz"],
+["When","Wann"],
+["When do you come","Wann kommst du"],
+["How","Wie"],
+["How are you","Wie geht es dir"],
+["many","viele"],
+["How many","Wie viele"],
+["How many weeks","Wie viele Wochen"],
+["smoker","Raucher"],
+["Are you a smoker","Bist du ein Raucher"],
+["non smoker","Nichtraucher"],
+["Are you a non smoker","Bist du ein Nichtraucher"],
+["really","wirklich"],
+["a surprise","eine Überraschung"],
+["Really a surprise","Wirklich eine Überraschung"],
+["What's that","Was ist das"],
+["That's a plane","Das ist ein Flugzeug"],
+["Can you see the sign","Kannst du das Zeichen sehen"],
+["No I can't","Nein ich kann es nicht sehen"],
+["Can you hear your name","Kannst du deinen Namen hören"],
+["No I can't hear","Nein ich kann ihn nicht hören"]
+],
+
+"Lesson 1.9": [
+["They go back to the counter",""],
+["You arrive at Heathrow airport in the morning",""],
+["Where are the toilets please",""],
+["I have no idea",""],
+["I think we must turn left",""],
+["They take their luggage and their bags",""],
+["I am looking for customs",""],
+["They must show their passports",""],
+["I have nothing to declare",""],
+["Let's go to the information desk",""],
+["Can I help you",""],
+["Excuse me where is the lounge",""],
+["We are having a nice holiday",""],
+["Turn right and you will see a sign",""]
+],
+
+"Lesson 1.10": [
+["It's nice to meet you",""],
+["How are you I'm fine",""],
+["They are waiting outside",""],
+["We are happy to meet you here",""],
+["They hear their names",""],
+["This is my wife's handbag",""],
+["It's five o'clock in the evening",""],
+["Do you know the way",""],
+["Goodbye enjoy your holidays",""],
+["Can you understand anything",""],
+["We are looking for our children",""]
+]
+
+};
+</script>
+
+<!-- ================= RENDER ================= -->
+
+<script>
+Object.keys(lessons).forEach(name => {
+  document.body.innerHTML += `<div class="lesson">
+  <h2>${name}</h2>
+  <button onclick="playLesson(lessons['${name}'])">▶ Play Lesson</button>
+  <div id="${name}"></div>
+  </div>`;
+
+  lessons[name].forEach(p=>{
+    document.getElementById(name).innerHTML += `
+    <div class="row">
+      ${p[0]} 
+      <button onclick="speak('${p[0]}','en-US')">EN</button>
+      ${p[1] ? `— ${p[1]} <button onclick="speak('${p[1]}','de-DE')">DE</button>` : ''}
+    </div>`;
+  });
+});
+</script>
+
+</body>
+</html>
