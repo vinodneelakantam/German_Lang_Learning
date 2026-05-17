@@ -330,6 +330,18 @@ button:hover { filter: brightness(1.06); }
   background: #eaf6ff;
 }
 
+.vocab-table tbody tr.is-playing,
+.dialog-table tbody tr.is-playing {
+  background: linear-gradient(90deg, rgba(255, 230, 128, 0.82), rgba(255, 203, 92, 0.72)) !important;
+  outline: 2px solid rgba(255, 166, 0, 0.55);
+  outline-offset: -2px;
+}
+
+.vocab-table tbody tr.is-playing td,
+.dialog-table tbody tr.is-playing td {
+  font-weight: 800;
+}
+
 @media (max-width: 700px) {
   body { padding: 14px; }
   .topbar {
@@ -352,11 +364,43 @@ let activeQueueIndex = 0;
 let categoryDescriptions = {};
 let autoPlayNextCategories = true;
 let lastPlaybackStarter = null;
+let activePlaybackRow = null;
 
-function say(text, lang, cancelFirst){
+function lessonRowId(lessonName, rowIndex){
+  const safeLesson = String(lessonName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return `lesson-row-${safeLesson}-${rowIndex}`;
+}
+
+function rolePlayRowId(scenarioIndex, rowIndex){
+  return `roleplay-row-${scenarioIndex}-${rowIndex}`;
+}
+
+function clearPlaybackHighlight(){
+  if(activePlaybackRow){
+    activePlaybackRow.classList.remove('is-playing');
+    activePlaybackRow = null;
+  }
+}
+
+function highlightPlaybackRowById(rowId){
+  clearPlaybackHighlight();
+  if(!rowId) return;
+  const row = document.getElementById(rowId);
+  if(!row) return;
+  activePlaybackRow = row;
+  row.classList.add('is-playing');
+  row.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+}
+
+function say(text, lang, cancelFirst, onEnd, onStart){
   const u = new SpeechSynthesisUtterance(text);
   u.lang = lang;
   u.rate = rate;
+  if(onStart) u.onstart = onStart;
+  if(onEnd){
+    u.onend = onEnd;
+    u.onerror = onEnd;
+  }
   if(cancelFirst) window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
 }
@@ -429,6 +473,7 @@ function stopPlayback(){
   playbackActive = false;
   playbackPaused = false;
   clearPlaybackTimers();
+  clearPlaybackHighlight();
   activeAutoQueue = [];
   activeQueueIndex = 0;
   window.speechSynthesis.cancel();
@@ -469,23 +514,43 @@ function speakIntroThen(introText, startPlayback){
   playbackTimerB = setTimeout(finishOnce, estimatedMs);
 }
 
-function playSingleLesson(list, categoryTitle, announceCategory, onComplete){
+function playSingleLesson(lessonName, list, categoryTitle, announceCategory, onComplete){
   const label = categoryTitle || 'Selected Category';
   setPlaybackStatus(`Now Playing: ${label}`);
 
   let i=0;
+  const stepGap = () => Math.max(120, Math.floor(320 / Math.max(rate, 0.1)));
+
   function run(){
     if(!playbackActive || playbackPaused) return;
 
     if(i<list.length){
-      say(list[i][0], 'en-US', false);
-      playbackTimerA = setTimeout(()=>{
+      const en = list[i][0] || '';
+      const de = list[i][1] || '';
+      highlightPlaybackRowById(lessonRowId(lessonName, i));
+
+      const advanceToNext = () => {
         if(!playbackActive || playbackPaused) return;
-        if(list[i][1]) say(list[i][1], 'de-DE', false);
         i++;
-        playbackTimerB = setTimeout(run,1500);
-      },1200);
+        playbackTimerB = setTimeout(run, stepGap());
+      };
+
+      const speakGerman = () => {
+        if(!playbackActive || playbackPaused) return;
+        if(de){
+          say(de, 'de-DE', false, advanceToNext);
+        } else {
+          advanceToNext();
+        }
+      };
+
+      if(en){
+        say(en, 'en-US', false, speakGerman);
+      } else {
+        speakGerman();
+      }
     } else {
+      clearPlaybackHighlight();
       if(onComplete) onComplete();
     }
   }
@@ -514,7 +579,7 @@ function playNextQueuedLesson(){
   const previous = activeAutoQueue[activeQueueIndex - 1];
   const announceCategory = !previous || previous.sectionIndex !== item.sectionIndex;
 
-  playSingleLesson(item.list, item.categoryTitle, announceCategory, () => {
+  playSingleLesson(item.lessonName, item.list, item.categoryTitle, announceCategory, () => {
     if(!playbackActive) return;
     activeQueueIndex++;
     playNextQueuedLesson();
@@ -542,14 +607,16 @@ function playLesson(lessonName, categoryTitle){
   playNextQueuedLesson();
 }
 
-function playRolePlay(dialog, title, contextText){
-  lastPlaybackStarter = () => playRolePlay(dialog, title, contextText);
+function playRolePlay(dialog, title, contextText, scenarioIndex){
+  lastPlaybackStarter = () => playRolePlay(dialog, title, contextText, scenarioIndex);
   stopPlayback();
   playbackActive = true;
   playbackPaused = false;
   setPlaybackStatus(`Now Playing Role Play: ${title}`);
 
   let i = 0;
+  const stepGap = () => Math.max(140, Math.floor(360 / Math.max(rate, 0.1)));
+
   function run(){
     if(!playbackActive || playbackPaused) return;
 
@@ -557,17 +624,32 @@ function playRolePlay(dialog, title, contextText){
       const en = dialog[i][0] || '';
       const de = dialog[i][1] || '';
 
-      if(en) say(en, 'en-US', false);
+      highlightPlaybackRowById(rolePlayRowId(scenarioIndex, i));
 
-      playbackTimerA = setTimeout(() => {
+      const advanceToNext = () => {
         if(!playbackActive || playbackPaused) return;
-        if(de) say(de, 'de-DE', false);
         i++;
-        playbackTimerB = setTimeout(run, 1700);
-      }, 1400);
+        playbackTimerB = setTimeout(run, stepGap());
+      };
+
+      const speakGerman = () => {
+        if(!playbackActive || playbackPaused) return;
+        if(de){
+          say(de, 'de-DE', false, advanceToNext);
+        } else {
+          advanceToNext();
+        }
+      };
+
+      if(en){
+        say(en, 'en-US', false, speakGerman);
+      } else {
+        speakGerman();
+      }
     } else {
       playbackActive = false;
       playbackPaused = false;
+      clearPlaybackHighlight();
       setPlaybackStatus(`Completed role play: ${title}`);
     }
   }
@@ -790,34 +872,34 @@ const lessons = {
 ],
 
 "Lesson 1.9": [
-["They go back to the counter",""],
-["You arrive at Heathrow airport in the morning",""],
-["Where are the toilets please",""],
-["I have no idea",""],
-["I think we must turn left",""],
-["They take their luggage and their bags",""],
-["I am looking for customs",""],
-["They must show their passports",""],
-["I have nothing to declare",""],
-["Let's go to the information desk",""],
-["Can I help you",""],
-["Excuse me where is the lounge",""],
-["We are having a nice holiday",""],
-["Turn right and you will see a sign",""]
+["They go back to the counter","Sie gehen zurueck zum Schalter"],
+["You arrive at Heathrow airport in the morning","Du kommst morgens am Flughafen Heathrow an"],
+["Where are the toilets please","Wo sind bitte die Toiletten"],
+["I have no idea","Ich habe keine Ahnung"],
+["I think we must turn left","Ich glaube, wir muessen links abbiegen"],
+["They take their luggage and their bags","Sie nehmen ihr Gepaeck und ihre Taschen"],
+["I am looking for customs","Ich suche den Zoll"],
+["They must show their passports","Sie muessen ihre Paesse zeigen"],
+["I have nothing to declare","Ich habe nichts zu verzollen"],
+["Let's go to the information desk","Gehen wir zum Informationsschalter"],
+["Can I help you","Kann ich Ihnen helfen"],
+["Excuse me where is the lounge","Entschuldigung, wo ist die Wartehalle"],
+["We are having a nice holiday","Wir haben schoene Ferien"],
+["Turn right and you will see a sign","Biegen Sie rechts ab und Sie werden ein Schild sehen"]
 ],
 
 "Lesson 1.10": [
-["It's nice to meet you",""],
-["How are you I'm fine",""],
-["They are waiting outside",""],
-["We are happy to meet you here",""],
-["They hear their names",""],
-["This is my wife's handbag",""],
-["It's five o'clock in the evening",""],
-["Do you know the way",""],
-["Goodbye enjoy your holidays",""],
-["Can you understand anything",""],
-["We are looking for our children",""]
+["It's nice to meet you","Es ist schoen, Sie kennenzulernen"],
+["How are you I'm fine","Wie geht es Ihnen? Mir geht es gut"],
+["They are waiting outside","Sie warten draussen"],
+["We are happy to meet you here","Wir freuen uns, Sie hier zu treffen"],
+["They hear their names","Sie hoeren ihre Namen"],
+["This is my wife's handbag","Das ist die Handtasche meiner Frau"],
+["It's five o'clock in the evening","Es ist fuenf Uhr abends"],
+["Do you know the way","Kennen Sie den Weg"],
+["Goodbye enjoy your holidays","Auf Wiedersehen, geniessen Sie Ihre Ferien"],
+["Can you understand anything","Koennen Sie etwas verstehen"],
+["We are looking for our children","Wir suchen unsere Kinder"]
 ]
 
 };
@@ -1207,13 +1289,14 @@ const rolePlayScenarios = [
 ];
 
 function renderLessonCard(name){
-  const lessonEntries = lessons[name].map((p) => {
+  const lessonEntries = lessons[name].map((p, rowIndex) => {
+    const rowId = lessonRowId(name, rowIndex);
     const enCell = `<td class="speak-cell english" onclick="speak('${esc(p[0])}','en-US')">${p[0]}</td>`;
     const deCell = p[1]
       ? `<td class="speak-cell german" onclick="speak('${esc(p[1])}','de-DE')">${p[1]}</td>`
       : '<td></td>';
 
-    return `<tr>${enCell}${deCell}</tr>`;
+    return `<tr id="${rowId}">${enCell}${deCell}</tr>`;
   }).join('');
 
   return `
@@ -1277,12 +1360,13 @@ rolePlayScenarios.forEach((scenario, index) => {
   const scenarioId = `scenario-${slugify(scenario.title)}`;
   rolePlayPrefaceLinks.innerHTML += `<a class="jump-link" href="#${scenarioId}">${scenario.title}</a>`;
 
-  const rows = scenario.lines.map((line) => {
+  const rows = scenario.lines.map((line, lineIndex) => {
     const en = line[0] || '';
     const de = line[1] || '';
+    const rowId = rolePlayRowId(index, lineIndex);
     const enCell = en ? `<td class="speak-cell english" onclick="speak('${esc(en)}','en-US')">${en}</td>` : '<td></td>';
     const deCell = de ? `<td class="speak-cell german" onclick="speak('${esc(de)}','de-DE')">${de}</td>` : '<td></td>';
-    return `<tr>${enCell}${deCell}</tr>`;
+    return `<tr id="${rowId}">${enCell}${deCell}</tr>`;
   }).join('');
 
   rolePlayContainer.innerHTML += `
@@ -1290,7 +1374,7 @@ rolePlayScenarios.forEach((scenario, index) => {
     <div class="scenario-head">
       <h3>${scenario.title}</h3>
       <div>
-        <button class="play-role-btn" onclick="playRolePlay(rolePlayScenarios[${index}].lines,'${esc(scenario.title)}','${esc(scenario.context)}')">▶ Play</button>
+        <button class="play-role-btn" onclick="playRolePlay(rolePlayScenarios[${index}].lines,'${esc(scenario.title)}','${esc(scenario.context)}',${index})">▶ Play</button>
       </div>
     </div>
     <p class="scenario-sub">${scenario.context}</p>
