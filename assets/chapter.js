@@ -74,6 +74,23 @@
     }, 300);
   }
 
+  function startFromFirstAvailableContent() {
+    if (state.orderedLessons.length) {
+      const firstLesson = state.orderedLessons[0];
+      window.playLesson(firstLesson.lessonName, firstLesson.categoryTitle);
+      return true;
+    }
+
+    const scenarios = config.rolePlayScenarios || [];
+    if (scenarios.length) {
+      const firstScenario = scenarios[0];
+      window.playRolePlay(firstScenario.lines || [], firstScenario.title || 'Role Play', firstScenario.context || '', 0);
+      return true;
+    }
+
+    return false;
+  }
+
   function lessonRowId(lessonName, rowIndex) {
     const safeLesson = slugify(lessonName);
     return `lesson-row-${safeLesson}-${rowIndex}`;
@@ -177,7 +194,8 @@
       } else if (state.playbackActive) {
         setPlaybackStatus('Already playing');
       } else {
-        setPlaybackStatus('Choose a lesson and press Play');
+        const started = startFromFirstAvailableContent();
+        if (!started) setPlaybackStatus('No playable content found');
       }
     } else if (action === 'pause') {
       pausePlayback();
