@@ -14,7 +14,9 @@
     activeAutoQueue: [],
     activeQueueIndex: 0,
     orderedLessons: [],
-    lessonOrder: {}
+    lessonOrder: {},
+    availableVoices: [],
+    speakerVoiceMap: {}
   };
 
   const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -26,7 +28,8 @@
     'chapter-04-work-and-jobs.html',
     'chapter-05-health-and-medical.html',
     'chapter-06-transport-and-commuting.html',
-    'chapter-07-role-play-scenarios.html'
+    'chapter-07-role-play-scenarios.html',
+    'chapter-08-german-only-topics.html'
   ];
 
   function getCurrentListeningChapterIndex() {
@@ -65,12 +68,8 @@
   function autoStartFromQuery() {
     const params = new URLSearchParams(window.location.search || '');
     if (params.get('autoplay') !== '1') return;
-    if (!state.orderedLessons.length) return;
-
-    const firstLesson = state.orderedLessons[0];
     setTimeout(() => {
-      if (!firstLesson) return;
-      window.playLesson(firstLesson.lessonName, firstLesson.categoryTitle);
+      startFromFirstAvailableContent();
     }, 300);
   }
 
@@ -117,10 +116,12 @@
     row.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
   }
 
-  function say(text, lang, cancelFirst, onEnd) {
+  function say(text, lang, cancelFirst, onEnd, options) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
     utterance.rate = state.rate;
+    const resolvedVoice = (options && options.voice) || resolveVoice(lang, options || {});
+    if (resolvedVoice) utterance.voice = resolvedVoice;
     if (onEnd) {
       utterance.onend = onEnd;
       utterance.onerror = onEnd;
@@ -151,6 +152,90 @@
     state.playbackTimerB = null;
   }
 
+  function loadVoices() {
+    state.availableVoices = window.speechSynthesis.getVoices() || [];
+  }
+
+  function languageCode(lang) {
+    return String(lang || '').toLowerCase().split('-')[0];
+  }
+
+  function scoreVoiceByHint(voiceName, voiceHint) {
+    const hint = String(voiceHint || '').toLowerCase();
+    if (!hint) return 0;
+
+    const malePattern = /(male|mann|herr|daniel|thomas|markus|hans|stefan|matthias|christian|joachim|oliver|viktor|wolfgang)/i;
+    const femalePattern = /(female|frau|anna|petra|katja|sabine|julia|maria|sarah|eva|nora|lisa)/i;
+
+    if (hint === 'male') {
+      if (malePattern.test(voiceName)) return 30;
+      if (femalePattern.test(voiceName)) return -20;
+    }
+
+    if (hint === 'female') {
+      if (femalePattern.test(voiceName)) return 30;
+      if (malePattern.test(voiceName)) return -20;
+    }
+
+    return 0;
+  }
+
+  function resolveVoice(lang, opts) {
+    loadVoices();
+    const options = opts || {};
+    const allVoices = state.availableVoices || [];
+    if (!allVoices.length) return null;
+
+    const targetCode = languageCode(lang);
+    let candidates = allVoices.filter((voice) => languageCode(voice.lang) === targetCode);
+    if (!candidates.length) candidates = allVoices;
+
+    let best = null;
+    let bestScore = -1e9;
+
+    candidates.forEach((voice) => {
+      let score = 0;
+      score += scoreVoiceByHint(voice.name || '', options.voiceHint);
+      if (options.avoidVoiceName && voice.name === options.avoidVoiceName) score -= 80;
+      if (voice.default) score += 5;
+
+      if (score > bestScore) {
+        best = voice;
+        bestScore = score;
+      }
+    });
+
+    return best;
+  }
+
+  function getSpeakerProfile(speakerName) {
+    const map = config.rolePlaySpeakers || {};
+    if (!speakerName || typeof map !== 'object') return {};
+    return map[speakerName] || {};
+  }
+
+  function getVoiceForSpeaker(speakerName, lang) {
+    if (!speakerName) return null;
+
+    const assignedVoiceName = state.speakerVoiceMap[speakerName];
+    if (assignedVoiceName) {
+      loadVoices();
+      const existing = (state.availableVoices || []).find((voice) => voice.name === assignedVoiceName);
+      if (existing) return existing;
+    }
+
+    const profile = getSpeakerProfile(speakerName);
+    const usedVoiceNames = Object.values(state.speakerVoiceMap);
+    const avoidVoiceName = usedVoiceNames.length ? usedVoiceNames[0] : '';
+    const voice = resolveVoice(lang, {
+      voiceHint: profile.voiceHint,
+      avoidVoiceName
+    });
+
+    if (voice) state.speakerVoiceMap[speakerName] = voice.name;
+    return voice;
+  }
+
   function stopPlayback() {
     state.playbackActive = false;
     state.playbackPaused = false;
@@ -158,6 +243,7 @@
     clearPlaybackHighlight();
     state.activeAutoQueue = [];
     state.activeQueueIndex = 0;
+    state.speakerVoiceMap = {};
     window.speechSynthesis.cancel();
     setPlaybackStatus('Stopped');
   }
@@ -207,10 +293,28 @@
   function getCategoryIntro(categoryTitle) {
     if (!categoryTitle) return '';
     const details = (config.categoryDescriptions || {})[categoryTitle];
+    if (config.practiceMode === 'de-de') {
+      if (details) {
+        return `Thema ${categoryTitle}. In diesem Abschnitt uebst du nur Deutsch mit einfachen Saetzen. ${details}`;
+      }
+      return `Thema ${categoryTitle}. In diesem Abschnitt uebst du nur Deutsch mit einfachen Saetzen.`;
+    }
     if (details) {
       return `You are in ${categoryTitle}. Under this topic, you will practice English and German vocabulary for daily life. ${details}`;
     }
     return `You are in ${categoryTitle}. Under this topic, you will practice English and German vocabulary for daily life.`;
+  }
+
+  function getColumnLang(columnIndex) {
+    const langs = config.columnLangs || [];
+    if (langs[columnIndex]) return langs[columnIndex];
+    return columnIndex === 0 ? 'en-US' : 'de-DE';
+  }
+
+  function getColumnLabel(columnIndex) {
+    const labels = config.columnLabels || [];
+    if (labels[columnIndex]) return labels[columnIndex];
+    return columnIndex === 0 ? 'English' : 'German';
   }
 
   function speakIntroThen(introText, startPlayback) {
@@ -249,8 +353,10 @@
       if (!state.playbackActive || state.playbackPaused) return;
 
       if (i < list.length) {
-        const en = list[i][0] || '';
-        const de = list[i][1] || '';
+        const colA = list[i][0] || '';
+        const colB = list[i][1] || '';
+        const langA = getColumnLang(0);
+        const langB = getColumnLang(1);
         highlightPlaybackRowById(lessonRowId(lessonName, i));
 
         const advanceToNext = () => {
@@ -259,19 +365,19 @@
           state.playbackTimerB = setTimeout(run, stepGap());
         };
 
-        const speakGerman = () => {
+        const speakSecond = () => {
           if (!state.playbackActive || state.playbackPaused) return;
-          if (de) {
-            say(de, 'de-DE', false, advanceToNext);
+          if (colB) {
+            say(colB, langB, false, advanceToNext);
           } else {
             advanceToNext();
           }
         };
 
-        if (en) {
-          say(en, 'en-US', false, speakGerman);
+        if (colA) {
+          say(colA, langA, false, speakSecond);
         } else {
-          speakGerman();
+          speakSecond();
         }
       } else {
         clearPlaybackHighlight();
@@ -349,11 +455,9 @@
 
     function run() {
       if (!state.playbackActive || state.playbackPaused) return;
+      const speakerTextMode = config.rolePlayFormat === 'speaker-text';
 
       if (i < dialog.length) {
-        const en = dialog[i][0] || '';
-        const de = dialog[i][1] || '';
-
         highlightPlaybackRowById(rolePlayRowId(scenarioIndex, i));
 
         const advanceToNext = () => {
@@ -362,19 +466,37 @@
           state.playbackTimerB = setTimeout(run, stepGap());
         };
 
-        const speakGerman = () => {
-          if (!state.playbackActive || state.playbackPaused) return;
-          if (de) {
-            say(de, 'de-DE', false, advanceToNext);
+        if (speakerTextMode) {
+          const row = dialog[i] || {};
+          const speaker = row.speaker || '';
+          const text = row.text || '';
+          const voice = getVoiceForSpeaker(speaker, 'de-DE');
+
+          if (text) {
+            say(text, 'de-DE', false, advanceToNext, { voice });
           } else {
             advanceToNext();
           }
-        };
-
-        if (en) {
-          say(en, 'en-US', false, speakGerman);
         } else {
-          speakGerman();
+          const colA = dialog[i][0] || '';
+          const colB = dialog[i][1] || '';
+          const langA = getColumnLang(0);
+          const langB = getColumnLang(1);
+
+          const speakSecond = () => {
+            if (!state.playbackActive || state.playbackPaused) return;
+            if (colB) {
+              say(colB, langB, false, advanceToNext);
+            } else {
+              advanceToNext();
+            }
+          };
+
+          if (colA) {
+            say(colA, langA, false, speakSecond);
+          } else {
+            speakSecond();
+          }
         }
       } else {
         state.playbackActive = false;
@@ -395,12 +517,17 @@
   };
 
   function renderLessonCard(categoryTitle, lessonName, lessonEntries) {
+    const columnALabel = getColumnLabel(0);
+    const columnBLabel = getColumnLabel(1);
+    const columnALang = getColumnLang(0);
+    const columnBLang = getColumnLang(1);
+
     const lessonRows = lessonEntries
       .map((p, rowIndex) => {
         const rowId = lessonRowId(lessonName, rowIndex);
-        const enCell = `<td class="speak-cell english" onclick="speakCell('${esc(p[0])}','en-US')">${p[0] || ''}</td>`;
+        const enCell = `<td class="speak-cell english" onclick="speakCell('${esc(p[0])}','${esc(columnALang)}')">${p[0] || ''}</td>`;
         const deCell = p[1]
-          ? `<td class="speak-cell german" onclick="speakCell('${esc(p[1])}','de-DE')">${p[1]}</td>`
+          ? `<td class="speak-cell german" onclick="speakCell('${esc(p[1])}','${esc(columnBLang)}')">${p[1]}</td>`
           : '<td></td>';
 
         return `<tr id="${rowId}">${enCell}${deCell}</tr>`;
@@ -418,8 +545,8 @@
           <table class="vocab-table">
             <thead>
               <tr>
-                <th>English</th>
-                <th>German</th>
+                <th>${columnALabel}</th>
+                <th>${columnBLabel}</th>
               </tr>
             </thead>
             <tbody>${lessonRows}</tbody>
@@ -431,6 +558,12 @@
   function renderRolePlaySection() {
     const scenarios = config.rolePlayScenarios || [];
     if (!scenarios.length) return;
+
+    const columnALabel = getColumnLabel(0);
+    const columnBLabel = getColumnLabel(1);
+    const columnALang = getColumnLang(0);
+    const columnBLang = getColumnLang(1);
+    const speakerTextMode = config.rolePlayFormat === 'speaker-text';
 
     const rolePlayContainer = document.getElementById('rolePlayContainer');
     const rolePlayPrefaceLinks = document.getElementById('rolePlayPrefaceLinks');
@@ -445,11 +578,20 @@
 
       const rows = scenario.lines
         .map((line, lineIndex) => {
+          const rowId = rolePlayRowId(index, lineIndex);
+
+          if (speakerTextMode) {
+            const speaker = line.speaker || '';
+            const text = line.text || '';
+            const speakerCell = `<td>${speaker}</td>`;
+            const textCell = text ? `<td class="speak-cell german" onclick="speakCell('${esc(text)}','de-DE')">${text}</td>` : '<td></td>';
+            return `<tr id="${rowId}">${speakerCell}${textCell}</tr>`;
+          }
+
           const en = line[0] || '';
           const de = line[1] || '';
-          const rowId = rolePlayRowId(index, lineIndex);
-          const enCell = en ? `<td class="speak-cell english" onclick="speakCell('${esc(en)}','en-US')">${en}</td>` : '<td></td>';
-          const deCell = de ? `<td class="speak-cell german" onclick="speakCell('${esc(de)}','de-DE')">${de}</td>` : '<td></td>';
+          const enCell = en ? `<td class="speak-cell english" onclick="speakCell('${esc(en)}','${esc(columnALang)}')">${en}</td>` : '<td></td>';
+          const deCell = de ? `<td class="speak-cell german" onclick="speakCell('${esc(de)}','${esc(columnBLang)}')">${de}</td>` : '<td></td>';
           return `<tr id="${rowId}">${enCell}${deCell}</tr>`;
         })
         .join('');
@@ -467,8 +609,8 @@
             <table class="dialog-table">
               <thead>
                 <tr>
-                  <th>English</th>
-                  <th>German</th>
+                  <th>${columnALabel}</th>
+                  <th>${columnBLabel}</th>
                 </tr>
               </thead>
               <tbody>${rows}</tbody>
@@ -531,11 +673,22 @@
       }
     });
 
+    totalEntries += (config.rolePlayScenarios || []).reduce((sum, scenario) => {
+      return sum + ((scenario.lines || []).length);
+    }, 0);
+
     const totalCountNode = document.getElementById('totalCount');
     if (totalCountNode) totalCountNode.textContent = totalEntries;
 
     renderRolePlaySection();
   }
+
+  loadVoices();
+  const previousVoicesChanged = window.speechSynthesis.onvoiceschanged;
+  window.speechSynthesis.onvoiceschanged = function () {
+    loadVoices();
+    if (typeof previousVoicesChanged === 'function') previousVoicesChanged();
+  };
 
   applyPlaybackParamsFromQuery();
   renderChapter();

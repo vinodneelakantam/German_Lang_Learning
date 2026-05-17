@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Listening 08 - German to German Basics</title>
+<link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+<main class="main-shell">
+<a class="back-home" href="../index.html">← Back to Chapters</a>
+
+<div class="signature">
+  <strong id="signatureName"></strong>
+  <a id="signatureLink" target="_blank" rel="noopener"></a>
+</div>
+
+<div class="topbar">
+Speed:
+<select onchange="setSpeed(this.value)">
+<option value="0.5">Slow</option>
+<option value="1.0" selected>Normal</option>
+<option value="1.5">Fast</option>
+</select>
+<label style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#36506e;">
+<input type="checkbox" checked onchange="setAutoPlayNext(this.checked)">
+Auto-Play-Next topics
+</label>
+<button class="play-btn" onclick="handlePlaybackAction('play')">Play / Resume</button>
+<button onclick="handlePlaybackAction('pause')">Pause</button>
+<button class="stop-btn" onclick="handlePlaybackAction('stop')">Stop</button>
+<span id="playbackStatus" class="playback-status">Idle</span>
+</div>
+
+<h1 id="appTitle"></h1>
+<p id="appSubtitle" class="subtitle"></p>
+<p class="subtitle">Click any word to hear it. Use Play to run a full category. Total entries: <strong id="totalCount">0</strong></p>
+
+<section class="topic-preface">
+  <h2 class="section-title">Start Here</h2>
+  <p class="subtitle compact">Springe schnell zu jedem Thema auf dieser Seite.</p>
+  <div id="topicPrefaceLinks" class="topic-links"></div>
+  <div id="rolePlayPrefaceLinks" class="topic-links"></div>
+</section>
+
+<div id="lessonsContainer"></div>
+<section id="rolePlaySection" style="display:none;">
+  <h2 class="section-title">Role Play Scenarios</h2>
+  <p class="subtitle">Play practical conversations for daily immigrant and tourist situations.</p>
+  <div id="rolePlayContainer" class="scenario-grid"></div>
+</section>
+</main>
+
+<script>
+window.CHAPTER_CONFIG = {
+  title: 'Listening 08: German Role Plays - Alltag',
+  subtitle: 'Nur Deutsch. Zehn echte Alltagsgespraeche als Rollenspiele.',
+  practiceMode: 'de-de',
+  rolePlayFormat: 'speaker-text',
+  columnLabels: ['Sprecher', 'Deutsch'],
+  columnLangs: ['de-DE', 'de-DE'],
+  rolePlaySpeakers: {
+    Mann: { voiceHint: 'male' },
+    Frau: { voiceHint: 'female' }
+  },
+  signature: {
+    name: 'Vinod Kumar Neelakantam',
+    linkText: 'linkedin.com/in/vinodneelakantam',
+    linkHref: 'https://www.linkedin.com/in/vinodneelakantam/'
+  },
+  categories: [],
+  rolePlayScenarios: [
+    {
+      title: '1. Im Cafe bestellen',
+      context: 'Eine kurze Bestellung im Cafe.',
+      lines: [
+        { speaker: 'Mann', text: 'Guten Tag, ich haette gern einen Kaffee und ein Croissant.' },
+        { speaker: 'Frau', text: 'Gern. Moechten Sie den Kaffee mit Milch?' },
+        { speaker: 'Mann', text: 'Ja, bitte mit wenig Milch und ohne Zucker.' },
+        { speaker: 'Frau', text: 'Sonst noch etwas?' },
+        { speaker: 'Mann', text: 'Nein, das ist alles. Was kostet das zusammen?' },
+        { speaker: 'Frau', text: 'Das macht sieben Euro achtzig.' },
+        { speaker: 'Mann', text: 'Hier bitte. Kann ich mit Karte zahlen?' },
+        { speaker: 'Frau', text: 'Ja, natuerlich. Vielen Dank.' }
+      ]
+    },
+    {
+      title: '2. Nach dem Weg fragen',
+      context: 'Ein Tourist fragt nach dem Bahnhof.',
+      lines: [
+        { speaker: 'Mann', text: 'Entschuldigung, koennen Sie mir helfen?' },
+        { speaker: 'Frau', text: 'Ja, gern. Was suchen Sie?' },
+        { speaker: 'Mann', text: 'Ich suche den Hauptbahnhof.' },
+        { speaker: 'Frau', text: 'Gehen Sie geradeaus bis zur Ampel und dann links.' },
+        { speaker: 'Mann', text: 'Ist das weit zu Fuss?' },
+        { speaker: 'Frau', text: 'Nein, nur etwa zehn Minuten.' },
+        { speaker: 'Mann', text: 'Vielen Dank fuer die Hilfe.' },
+        { speaker: 'Frau', text: 'Gern geschehen. Einen schoenen Tag noch.' }
+      ]
+    },
+    {
+      title: '3. Beim Arzt',
+      context: 'Termin und Beschwerden beim Hausarzt.',
+      lines: [
+        { speaker: 'Frau', text: 'Guten Morgen, was kann ich fuer Sie tun?' },
+        { speaker: 'Mann', text: 'Ich habe seit gestern starke Halsschmerzen.' },
+        { speaker: 'Frau', text: 'Haben Sie auch Fieber?' },
+        { speaker: 'Mann', text: 'Ja, ich glaube schon. Ich fuehle mich sehr muede.' },
+        { speaker: 'Frau', text: 'Bitte setzen Sie sich. Der Arzt kommt gleich.' },
+        { speaker: 'Mann', text: 'Danke. Brauche ich ein Rezept fuer die Medikamente?' },
+        { speaker: 'Frau', text: 'Ja, das bekommen Sie nach der Untersuchung.' },
+        { speaker: 'Mann', text: 'Alles klar, vielen Dank.' }
+      ]
+    },
+    {
+      title: '4. Im Supermarkt',
+      context: 'Produkte suchen und an der Kasse bezahlen.',
+      lines: [
+        { speaker: 'Mann', text: 'Entschuldigung, wo finde ich Reis und Linsen?' },
+        { speaker: 'Frau', text: 'Im dritten Gang, neben den Nudeln.' },
+        { speaker: 'Mann', text: 'Danke. Haben Sie auch laktosefreie Milch?' },
+        { speaker: 'Frau', text: 'Ja, im Kuehlregal ganz hinten.' },
+        { speaker: 'Mann', text: 'Super, dann nehme ich zwei Packungen.' },
+        { speaker: 'Frau', text: 'Moechten Sie sonst noch etwas?' },
+        { speaker: 'Mann', text: 'Nein, ich gehe jetzt zur Kasse.' },
+        { speaker: 'Frau', text: 'Alles klar, ich wuensche Ihnen einen guten Einkauf.' }
+      ]
+    },
+    {
+      title: '5. Wohnung und Vermieter',
+      context: 'Ein Problem mit der Heizung melden.',
+      lines: [
+        { speaker: 'Mann', text: 'Hallo, ich rufe wegen meiner Wohnung an.' },
+        { speaker: 'Frau', text: 'Ja, was ist das Problem?' },
+        { speaker: 'Mann', text: 'Die Heizung funktioniert seit gestern Abend nicht.' },
+        { speaker: 'Frau', text: 'In welchem Zimmer ist es kalt?' },
+        { speaker: 'Mann', text: 'Vor allem im Schlafzimmer und im Wohnzimmer.' },
+        { speaker: 'Frau', text: 'Ich schicke morgen frueh einen Techniker vorbei.' },
+        { speaker: 'Mann', text: 'Danke. Muss ich zu Hause bleiben?' },
+        { speaker: 'Frau', text: 'Ja, bitte zwischen acht und zehn Uhr.' }
+      ]
+    },
+    {
+      title: '6. Im Jobcenter',
+      context: 'Beratungstermin fuer Arbeit und Kurs.',
+      lines: [
+        { speaker: 'Frau', text: 'Guten Tag, haben Sie einen Termin?' },
+        { speaker: 'Mann', text: 'Ja, um zehn Uhr bei Frau Becker.' },
+        { speaker: 'Frau', text: 'Haben Sie Ihren Ausweis dabei?' },
+        { speaker: 'Mann', text: 'Ja, hier ist mein Ausweis und meine Unterlagen.' },
+        { speaker: 'Frau', text: 'Sehr gut. Suchen Sie Vollzeit oder Teilzeit?' },
+        { speaker: 'Mann', text: 'Ich suche zuerst Teilzeit und einen Sprachkurs am Abend.' },
+        { speaker: 'Frau', text: 'Wir haben passende Angebote. Ich drucke sie fuer Sie aus.' },
+        { speaker: 'Mann', text: 'Vielen Dank, das hilft mir sehr.' }
+      ]
+    },
+    {
+      title: '7. In der Apotheke',
+      context: 'Medikamente und Einnahme erklaeren.',
+      lines: [
+        { speaker: 'Mann', text: 'Guten Abend, ich brauche etwas gegen Husten.' },
+        { speaker: 'Frau', text: 'Ist der Husten trocken oder mit Schleim?' },
+        { speaker: 'Mann', text: 'Eher trocken, besonders nachts.' },
+        { speaker: 'Frau', text: 'Dann empfehle ich diesen Hustensaft.' },
+        { speaker: 'Mann', text: 'Wie oft soll ich ihn nehmen?' },
+        { speaker: 'Frau', text: 'Dreimal taeglich nach dem Essen, bitte mit Wasser.' },
+        { speaker: 'Mann', text: 'Vertraegt sich das mit Schmerztabletten?' },
+        { speaker: 'Frau', text: 'Ja, in normaler Dosis ist das moeglich.' }
+      ]
+    },
+    {
+      title: '8. Bahnhof und Ticket',
+      context: 'Fahrt nach Hamburg planen.',
+      lines: [
+        { speaker: 'Frau', text: 'Guten Tag, wohin moechten Sie fahren?' },
+        { speaker: 'Mann', text: 'Nach Hamburg, heute Nachmittag.' },
+        { speaker: 'Frau', text: 'Moechten Sie eine Verbindung mit oder ohne Umstieg?' },
+        { speaker: 'Mann', text: 'Am liebsten ohne Umstieg, wenn moeglich.' },
+        { speaker: 'Frau', text: 'Es gibt um 15:20 einen direkten Zug.' },
+        { speaker: 'Mann', text: 'Perfekt. Gibt es noch einen Sitzplatz am Fenster?' },
+        { speaker: 'Frau', text: 'Ja, ich reserviere Ihnen Platz 32 am Fenster.' },
+        { speaker: 'Mann', text: 'Super, dann nehme ich dieses Ticket.' }
+      ]
+    },
+    {
+      title: '9. Elternabend in der Schule',
+      context: 'Lehrerin und Eltern sprechen ueber das Kind.',
+      lines: [
+        { speaker: 'Frau', text: 'Danke, dass Sie heute gekommen sind.' },
+        { speaker: 'Mann', text: 'Gern. Wie laeuft es bei meinem Sohn in Deutsch?' },
+        { speaker: 'Frau', text: 'Er ist motiviert, aber er muss mehr lesen.' },
+        { speaker: 'Mann', text: 'Koennen Sie ein einfaches Buch empfehlen?' },
+        { speaker: 'Frau', text: 'Ja, ich gebe Ihnen eine Liste mit drei Buechern.' },
+        { speaker: 'Mann', text: 'Und wie ist sein Verhalten im Unterricht?' },
+        { speaker: 'Frau', text: 'Sehr freundlich und aufmerksam.' },
+        { speaker: 'Mann', text: 'Das freut mich. Vielen Dank fuer das Gespraech.' }
+      ]
+    },
+    {
+      title: '10. Wochenendplanung',
+      context: 'Freunde planen Samstag und Sonntag.',
+      lines: [
+        { speaker: 'Mann', text: 'Hast du am Samstag Zeit?' },
+        { speaker: 'Frau', text: 'Ja, ab elf Uhr bin ich frei.' },
+        { speaker: 'Mann', text: 'Dann koennen wir zuerst auf den Markt gehen.' },
+        { speaker: 'Frau', text: 'Gute Idee. Danach trinken wir einen Kaffee.' },
+        { speaker: 'Mann', text: 'Am Nachmittag moechte ich noch im Park spazieren.' },
+        { speaker: 'Frau', text: 'Einverstanden. Sonntag bleibe ich aber zu Hause.' },
+        { speaker: 'Mann', text: 'Kein Problem, dann sehen wir uns nur am Samstag.' },
+        { speaker: 'Frau', text: 'Perfekt, ich freue mich.' }
+      ]
+    }
+  ]
+};
+</script>
+<script src="../assets/chapter.js"></script>
+</body>
+</html>
