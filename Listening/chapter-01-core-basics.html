@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Listening 01 - Core Basics</title>
+<link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+<main class="main-shell">
+<a class="back-home" href="../index.html">← Back to Chapters</a>
+
+<div class="signature">
+  <strong id="signatureName"></strong>
+  <a id="signatureLink" target="_blank" rel="noopener"></a>
+</div>
+
+<div class="topbar">
+Speed:
+<select onchange="setSpeed(this.value)">
+<option value="0.5">Slow</option>
+<option value="1.0" selected>Normal</option>
+<option value="1.5">Fast</option>
+</select>
+<label style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#36506e;">
+<input type="checkbox" checked onchange="setAutoPlayNext(this.checked)">
+Auto-Play-Next topics
+</label>
+<button class="play-btn" onclick="handlePlaybackAction('play')">Play / Resume</button>
+<button onclick="handlePlaybackAction('pause')">Pause</button>
+<button class="stop-btn" onclick="handlePlaybackAction('stop')">Stop</button>
+<span id="playbackStatus" class="playback-status">Idle</span>
+</div>
+
+<h1 id="appTitle"></h1>
+<p id="appSubtitle" class="subtitle"></p>
+<p class="subtitle">Click any word to hear it. Use Play to run a full category. Total entries: <strong id="totalCount">0</strong></p>
+
+<section class="topic-preface">
+  <h2 class="section-title">Start Here</h2>
+  <p class="subtitle compact">Jump quickly to any category on this chapter page.</p>
+  <div id="topicPrefaceLinks" class="topic-links"></div>
+  <div id="rolePlayPrefaceLinks" class="topic-links"></div>
+</section>
+
+<div id="lessonsContainer"></div>
+<section id="rolePlaySection" style="display:none;">
+  <h2 class="section-title">Role Play Scenarios</h2>
+  <p class="subtitle">Play practical conversations for daily immigrant and tourist situations.</p>
+  <div id="rolePlayContainer" class="scenario-grid"></div>
+</section>
+</main>
+
+<script>
+window.CHAPTER_CONFIG = {
+  title: 'Listening 01: Core Basics',
+  subtitle: 'Listening practice for greetings, time, numbers, questions, connectors, and everyday talk.',
+  signature: {
+    name: 'Vinod Kumar Neelakantam',
+    linkText: 'linkedin.com/in/vinodneelakantam',
+    linkHref: 'https://www.linkedin.com/in/vinodneelakantam/'
+  },
+  categoryDescriptions: {
+    'Category: Foundations and Greetings': 'This section covers basic greetings and core starter phrases.',
+    'Category: Time, Numbers and Travel Help': 'This section covers time, counting, customs, and airport assistance phrases.',
+    'Category: Questions, Connectors and Everyday Talk': 'This section covers question words, connectors, and daily-use expressions.'
+  },
+  categories: [
+    {
+      title: 'Category: Foundations and Greetings',
+      description: 'This section covers basic greetings and core starter phrases.',
+      lessons: [
+        {
+          name: 'Lesson 1.6',
+          entries: [
+            ['good morning','Guten Morgen'],
+            ['good evening','Guten Abend'],
+            ['good afternoon','Guten Nachmittag'],
+            ['good night','Gute Nacht'],
+            ['a man','ein Mann'],
+            ['a woman','eine Frau'],
+            ['a wife','eine Ehefrau'],
+            ['a husband','ein Ehemann'],
+            ['a child','ein Kind'],
+            ['two children','zwei Kinder'],
+            ['to be','sein'],
+            ['I am','ich bin'],
+            ['you are','du bist / ihr seid'],
+            ['he is','er ist'],
+            ['she is','sie ist'],
+            ['it is','es ist'],
+            ['we are','wir sind'],
+            ['they are','sie sind'],
+            ["I'm happy",'ich bin gluecklich'],
+            ["I'm sorry",'es tut mir leid'],
+            ["I'm confused",'ich bin durcheinander'],
+            ["I'm glad",'ich bin froh'],
+            ['a plane','ein Flugzeug'],
+            ['a trip','eine Reise'],
+            ['an airport','ein Flughafen'],
+            ['attention','Achtung'],
+            ['to arrive','ankommen'],
+            ['we arrive','wir kommen an'],
+            ['to depart','abfliegen'],
+            ['we depart','wir fliegen ab'],
+            ['to ask','fragen'],
+            ["Let's ask",'Fragen wir'],
+            ["Let's go",'Gehen wir'],
+            ['to answer','antworten'],
+            ['all right','in Ordnung'],
+            ['please','bitte'],
+            ['thank you','danke'],
+            ['thank you very much','vielen Dank'],
+            ['information desk','Informationsschalter'],
+            ['sign','Zeichen'],
+            ['a loudspeaker','ein Lautsprecher'],
+            ['on the right','rechts'],
+            ['on the left','links'],
+            ['the way','der Weg'],
+            ['a passer-by','ein Passant'],
+            ['to know','wissen'],
+            ["I don't know",'ich weiss nicht'],
+            ['to see','sehen'],
+            ["I don't see",'ich sehe nicht']
+          ]
+        }
+      ]
+    },
+    {
+      title: 'Category: Time, Numbers and Travel Help',
+      description: 'This section covers time, counting, customs, and airport assistance phrases.',
+      lessons: [
+        {
+          name: 'Lesson 1.7',
+          entries: [
+            ['in the morning','morgens'],
+            ['in the afternoon','nachmittags'],
+            ['in the evening','abends'],
+            ['to come','kommen'],
+            ['a man comes','ein Mann kommt'],
+            ['to approach','sich naehern'],
+            ['a woman approaches','eine Frau kommt naeher'],
+            ['one two three','eins zwei drei'],
+            ['four five six','vier fuenf sechs'],
+            ['seven eight nine','sieben acht neun'],
+            ['ten eleven twelve','zehn elf zwoelf'],
+            ['one hour','eine Stunde'],
+            ['two days','zwei Tage'],
+            ['three weeks','drei Wochen'],
+            ['one second','eine Sekunde'],
+            ['ten minutes','zehn Minuten'],
+            ['fifty years','fuenfzig Jahre'],
+            ['the customs','der Zoll'],
+            ['at the customs','beim Zoll'],
+            ['the customs officer','der Zollbeamte'],
+            ['to meet','treffen'],
+            ['You meet a child','Du triffst ein Kind'],
+            ['to wait','warten'],
+            ['Wait a minute','Warte eine Minute'],
+            ['no alcohol','kein Alkohol'],
+            ['no cigarettes','keine Zigaretten'],
+            ['no chocolate','keine Schokolade'],
+            ['my passport','mein Pass'],
+            ['my pockets','meine Taschen'],
+            ['the counter','der Schalter'],
+            ['the lounge','die Wartehalle'],
+            ['name','Name'],
+            ['my name is','ich heisse'],
+            ['right','richtig'],
+            ['wrong','falsch'],
+            ["It's the wrong way",'Es ist der falsche Weg'],
+            ['perhaps','vielleicht'],
+            ['Perhaps we find it','Vielleicht finden wir es'],
+            ['certainly','sicherlich'],
+            ['Certainly we can show you the way','Sicherlich koennen wir dir den Weg zeigen'],
+            ['holidays','Ferien'],
+            ['Enjoy your holidays','Geniesse deine Ferien'],
+            ['luggage','das Gepaeck'],
+            ['a trolley','ein Wagen'],
+            ['two bags','zwei Taschen'],
+            ['to help','helfen'],
+            ['Can I help you','Kann ich Ihnen helfen'],
+            ['to hear','hoeren'],
+            ['We hear our names','Wir hoeren unsere Namen'],
+            ['to listen','zuhoeren'],
+            ['Listen our names','Horch unsere Namen']
+          ]
+        }
+      ]
+    },
+    {
+      title: 'Category: Questions, Connectors and Everyday Talk',
+      description: 'This section covers question words, connectors, and daily-use expressions.',
+      lessons: [
+        {
+          name: 'Lesson 1.8',
+          entries: [
+            ['to look','schauen'],
+            ['Look our bags','Schau unsere Taschen'],
+            ['but','aber'],
+            ['But no alcohol please','Aber keinen Alkohol bitte'],
+            ['and','und'],
+            ['a man and a woman','ein Mann und eine Frau'],
+            ['or','oder'],
+            ['cigarettes or chocolate','Zigaretten oder Schokolade'],
+            ['to have','haben'],
+            ['I have a car','Ich habe ein Auto'],
+            ['You have two bags','Du hast zwei Taschen'],
+            ['He has three trolleys','Er hat drei Karren'],
+            ['She has four pockets','Sie hat vier Taschen'],
+            ['We have ten cigarettes','Wir haben zehn Zigaretten'],
+            ['You have an idea','Du hast eine Idee'],
+            ['They have five kiosks','Sie haben fuenf Kioske'],
+            ["What's the matter",'Was ist los'],
+            ['outside','draussen'],
+            ['They wait outside','Sie warten draussen'],
+            ['something','etwas'],
+            ['I see something','Ich sehe etwas'],
+            ['today','heute'],
+            ['tomorrow','morgen'],
+            ['What','Was'],
+            ["What's your name",'Wie heisst du'],
+            ['Who','Wer'],
+            ['Who is this woman','Wer ist diese Frau'],
+            ['Where','Wo'],
+            ['Where is the airport','Wo ist der Flugplatz'],
+            ['When','Wann'],
+            ['When do you come','Wann kommst du'],
+            ['How','Wie'],
+            ['How are you','Wie geht es dir'],
+            ['many','viele'],
+            ['How many','Wie viele'],
+            ['How many weeks','Wie viele Wochen'],
+            ['smoker','Raucher'],
+            ['Are you a smoker','Bist du ein Raucher'],
+            ['non smoker','Nichtraucher'],
+            ['Are you a non smoker','Bist du ein Nichtraucher'],
+            ['really','wirklich'],
+            ['a surprise','eine Ueberraschung'],
+            ['Really a surprise','Wirklich eine Ueberraschung'],
+            ["What's that",'Was ist das'],
+            ["That's a plane",'Das ist ein Flugzeug'],
+            ['Can you see the sign','Kannst du das Zeichen sehen'],
+            ["No I can't",'Nein ich kann es nicht sehen'],
+            ['Can you hear your name','Kannst du deinen Namen hoeren'],
+            ["No I can't hear",'Nein ich kann ihn nicht hoeren']
+          ]
+        }
+      ]
+    }
+  ]
+};
+</script>
+<script src="../assets/chapter.js"></script>
+</body>
+</html>

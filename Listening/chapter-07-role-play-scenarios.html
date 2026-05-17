@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Listening 07 - Role Play Scenarios</title>
+<link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+<main class="main-shell">
+<a class="back-home" href="../index.html">← Back to Chapters</a>
+
+<div class="signature">
+  <strong id="signatureName"></strong>
+  <a id="signatureLink" target="_blank" rel="noopener"></a>
+</div>
+
+<div class="topbar">
+Speed:
+<select onchange="setSpeed(this.value)">
+<option value="0.5">Slow</option>
+<option value="1.0" selected>Normal</option>
+<option value="1.5">Fast</option>
+</select>
+<label style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#36506e;">
+<input type="checkbox" checked onchange="setAutoPlayNext(this.checked)">
+Auto-Play-Next topics
+</label>
+<button class="play-btn" onclick="handlePlaybackAction('play')">Play / Resume</button>
+<button onclick="handlePlaybackAction('pause')">Pause</button>
+<button class="stop-btn" onclick="handlePlaybackAction('stop')">Stop</button>
+<span id="playbackStatus" class="playback-status">Idle</span>
+</div>
+
+<h1 id="appTitle"></h1>
+<p id="appSubtitle" class="subtitle"></p>
+<p class="subtitle">Click any word to hear it. Use Play to run a full category. Total entries: <strong id="totalCount">0</strong></p>
+
+<section class="topic-preface">
+  <h2 class="section-title">Start Here</h2>
+  <p class="subtitle compact">Jump quickly to any scenario on this chapter page.</p>
+  <div id="topicPrefaceLinks" class="topic-links"></div>
+  <p class="subtitle compact">Role Play Shortcuts:</p>
+  <div id="rolePlayPrefaceLinks" class="topic-links"></div>
+</section>
+
+<div id="lessonsContainer"></div>
+<section id="rolePlaySection">
+  <h2 class="section-title">Role Play Scenarios</h2>
+  <p class="subtitle">Play practical conversations for daily immigrant and tourist situations.</p>
+  <div id="rolePlayContainer" class="scenario-grid"></div>
+</section>
+</main>
+
+<script>
+window.CHAPTER_CONFIG = {
+  title: 'Listening 07: Role Play Scenarios',
+  subtitle: 'Listening practice for full conversations in real-world situations.',
+  signature: {
+    name: 'Vinod Kumar Neelakantam',
+    linkText: 'linkedin.com/in/vinodneelakantam',
+    linkHref: 'https://www.linkedin.com/in/vinodneelakantam/'
+  },
+  categories: [
+    {
+      title: 'Category: Scenario Starters',
+      description: 'Short starter lines to warm up speaking before full role-play.',
+      lessons: [
+        {
+          name: 'Scenario Warmup',
+          entries: [
+            ['Can you help me, please?', 'Koennen Sie mir bitte helfen?'],
+            ['Where can I get information?', 'Wo kann ich Informationen bekommen?'],
+            ['I need this in German.', 'Ich brauche das auf Deutsch.'],
+            ['Could you repeat that slowly?', 'Koennten Sie das langsam wiederholen?'],
+            ['Thank you for your help.', 'Danke fuer Ihre Hilfe.']
+          ]
+        }
+      ]
+    }
+  ],
+  rolePlayScenarios: [
+    {
+      title: 'Supermarket Shopping',
+      context: 'Ask for products, compare prices, and pay at checkout.',
+      lines: [
+        ['Hello, where can I find rice?', 'Hallo, wo finde ich Reis?'],
+        ['Aisle five, next to pasta.', 'Gang fuenf, neben den Nudeln.'],
+        ['Do you have lactose free milk?', 'Haben Sie laktosefreie Milch?'],
+        ['Yes, in the fridge section.', 'Ja, in der Kuehlabteilung.'],
+        ['Can I pay by card?', 'Kann ich mit Karte bezahlen?'],
+        ['Yes, card or cash is fine.', 'Ja, Karte oder Bargeld ist in Ordnung.']
+      ]
+    },
+    {
+      title: 'Agentur fuer Arbeit',
+      context: 'Register as a job seeker and ask for training support.',
+      lines: [
+        ['Good morning, I have an appointment at ten.', 'Guten Morgen, ich habe um zehn Uhr einen Termin.'],
+        ['Please show your ID and registration.', 'Bitte zeigen Sie Ihren Ausweis und Ihre Anmeldung.'],
+        ['I am looking for a full time job.', 'Ich suche eine Vollzeitstelle.'],
+        ['We can offer a language and training course.', 'Wir koennen einen Sprach und Weiterbildungskurs anbieten.'],
+        ['When is my next appointment?', 'Wann ist mein naechster Termin?'],
+        ['Next Tuesday at nine thirty.', 'Naechsten Dienstag um neun Uhr dreissig.']
+      ]
+    },
+    {
+      title: 'Immigration Office Visit',
+      context: 'Submit documents for residence permit extension.',
+      lines: [
+        ['I would like to extend my residence permit.', 'Ich moechte meine Aufenthaltserlaubnis verlaengern.'],
+        ['Do you have the application form?', 'Haben Sie das Antragsformular?'],
+        ['Here is my registration certificate.', 'Hier ist meine Meldebescheinigung.'],
+        ['Do you also have health insurance proof?', 'Haben Sie auch einen Nachweis der Krankenversicherung?'],
+        ['Can I travel while waiting?', 'Kann ich waehrend der Wartezeit reisen?'],
+        ['Please wait for written confirmation first.', 'Bitte warten Sie zuerst auf die schriftliche Bestaetigung.']
+      ]
+    },
+    {
+      title: 'Tourist Information Center',
+      context: 'Ask for local attractions and transport advice.',
+      lines: [
+        ['We are new in the city and need a day plan.', 'Wir sind neu in der Stadt und brauchen einen Tagesplan.'],
+        ['Start with the old town and river walk.', 'Beginnen Sie mit der Altstadt und dem Spaziergang am Fluss.'],
+        ['How do we get there by public transport?', 'Wie kommen wir mit oeffentlichen Verkehrsmitteln dorthin?'],
+        ['Take tram line two from this stop.', 'Nehmen Sie die Strassenbahnlinie zwei von dieser Haltestelle.'],
+        ['Can you mark these places on the map?', 'Koennen Sie diese Orte auf der Karte markieren?'],
+        ['Of course, here is your map.', 'Natuerlich, hier ist Ihre Karte.']
+      ]
+    },
+    {
+      title: 'Doctor and Pharmacy',
+      context: 'Describe symptoms and receive medicine instructions.',
+      lines: [
+        ['I have had a fever since yesterday.', 'Ich habe seit gestern Fieber.'],
+        ['Do you also have a cough?', 'Haben Sie auch Husten?'],
+        ['Yes, and I feel very tired.', 'Ja, und ich fuehle mich sehr muede.'],
+        ['I will give you a prescription.', 'Ich gebe Ihnen ein Rezept.'],
+        ['How often should I take this medicine?', 'Wie oft soll ich dieses Medikament nehmen?'],
+        ['Two times daily after meals.', 'Zweimal taeglich nach dem Essen.']
+      ]
+    },
+    {
+      title: 'Landlord and Apartment Repair',
+      context: 'Report a home issue and arrange repair timing.',
+      lines: [
+        ['The heating is not working in my apartment.', 'Die Heizung in meiner Wohnung funktioniert nicht.'],
+        ['Since when do you have this problem?', 'Seit wann haben Sie dieses Problem?'],
+        ['Since last night, it is very cold.', 'Seit letzter Nacht, es ist sehr kalt.'],
+        ['We will send a technician tomorrow morning.', 'Wir schicken morgen frueh einen Techniker.'],
+        ['Will this cost extra money?', 'Kostet das extra Geld?'],
+        ['No, this repair is covered by the landlord.', 'Nein, diese Reparatur ist vom Vermieter abgedeckt.']
+      ]
+    }
+  ]
+};
+</script>
+<script src="../assets/chapter.js"></script>
+</body>
+</html>

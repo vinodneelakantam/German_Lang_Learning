@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Listening 02 - Airport and Conversations</title>
+<link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+<main class="main-shell">
+<a class="back-home" href="../index.html">← Back to Chapters</a>
+
+<div class="signature">
+  <strong id="signatureName"></strong>
+  <a id="signatureLink" target="_blank" rel="noopener"></a>
+</div>
+
+<div class="topbar">
+Speed:
+<select onchange="setSpeed(this.value)">
+<option value="0.5">Slow</option>
+<option value="1.0" selected>Normal</option>
+<option value="1.5">Fast</option>
+</select>
+<label style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#36506e;">
+<input type="checkbox" checked onchange="setAutoPlayNext(this.checked)">
+Auto-Play-Next topics
+</label>
+<button class="play-btn" onclick="handlePlaybackAction('play')">Play / Resume</button>
+<button onclick="handlePlaybackAction('pause')">Pause</button>
+<button class="stop-btn" onclick="handlePlaybackAction('stop')">Stop</button>
+<span id="playbackStatus" class="playback-status">Idle</span>
+</div>
+
+<h1 id="appTitle"></h1>
+<p id="appSubtitle" class="subtitle"></p>
+<p class="subtitle">Click any word to hear it. Use Play to run a full category. Total entries: <strong id="totalCount">0</strong></p>
+
+<section class="topic-preface">
+  <h2 class="section-title">Start Here</h2>
+  <p class="subtitle compact">Jump quickly to any category on this chapter page.</p>
+  <div id="topicPrefaceLinks" class="topic-links"></div>
+  <div id="rolePlayPrefaceLinks" class="topic-links"></div>
+</section>
+
+<div id="lessonsContainer"></div>
+<section id="rolePlaySection" style="display:none;">
+  <h2 class="section-title">Role Play Scenarios</h2>
+  <p class="subtitle">Play practical conversations for daily immigrant and tourist situations.</p>
+  <div id="rolePlayContainer" class="scenario-grid"></div>
+</section>
+</main>
+
+<script>
+window.CHAPTER_CONFIG = {
+  title: 'Listening 02: Airport and Conversation Sentences',
+  subtitle: 'Listening practice for airport movement and everyday conversation lines.',
+  signature: {
+    name: 'Vinod Kumar Neelakantam',
+    linkText: 'linkedin.com/in/vinodneelakantam',
+    linkHref: 'https://www.linkedin.com/in/vinodneelakantam/'
+  },
+  categoryDescriptions: {
+    'Category: Airport Scenario Practice': 'This section focuses on airport movement and travel communication.',
+    'Category: Conversation Sentences': 'This section is mixed conversation practice for real interactions.'
+  },
+  categories: [
+    {
+      title: 'Category: Airport Scenario Practice',
+      description: 'This section focuses on airport movement and travel communication.',
+      lessons: [
+        {
+          name: 'Lesson 1.9',
+          entries: [
+            ['They go back to the counter', 'Sie gehen zurueck zum Schalter'],
+            ['You arrive at Heathrow airport in the morning', 'Du kommst morgens am Flughafen Heathrow an'],
+            ['Where are the toilets please', 'Wo sind bitte die Toiletten'],
+            ['I have no idea', 'Ich habe keine Ahnung'],
+            ['I think we must turn left', 'Ich glaube, wir muessen links abbiegen'],
+            ['They take their luggage and their bags', 'Sie nehmen ihr Gepaeck und ihre Taschen'],
+            ['I am looking for customs', 'Ich suche den Zoll'],
+            ['They must show their passports', 'Sie muessen ihre Paesse zeigen'],
+            ['I have nothing to declare', 'Ich habe nichts zu verzollen'],
+            ["Let's go to the information desk", 'Gehen wir zum Informationsschalter'],
+            ['Can I help you', 'Kann ich Ihnen helfen'],
+            ['Excuse me where is the lounge', 'Entschuldigung, wo ist die Wartehalle'],
+            ['We are having a nice holiday', 'Wir haben schoene Ferien'],
+            ['Turn right and you will see a sign', 'Biegen Sie rechts ab und Sie werden ein Schild sehen']
+          ]
+        }
+      ]
+    },
+    {
+      title: 'Category: Conversation Sentences',
+      description: 'This section is mixed conversation practice for real interactions.',
+      lessons: [
+        {
+          name: 'Lesson 1.10',
+          entries: [
+            ["It's nice to meet you", 'Es ist schoen, Sie kennenzulernen'],
+            ["How are you I'm fine", 'Wie geht es Ihnen? Mir geht es gut'],
+            ['They are waiting outside', 'Sie warten draussen'],
+            ['We are happy to meet you here', 'Wir freuen uns, Sie hier zu treffen'],
+            ['They hear their names', 'Sie hoeren ihre Namen'],
+            ["This is my wife's handbag", 'Das ist die Handtasche meiner Frau'],
+            ["It's five o\'clock in the evening", 'Es ist fuenf Uhr abends'],
+            ['Do you know the way', 'Kennen Sie den Weg'],
+            ['Goodbye enjoy your holidays', 'Auf Wiedersehen, geniessen Sie Ihre Ferien'],
+            ['Can you understand anything', 'Koennen Sie etwas verstehen'],
+            ['We are looking for our children', 'Wir suchen unsere Kinder']
+          ]
+        }
+      ]
+    }
+  ]
+};
+</script>
+<script src="../assets/chapter.js"></script>
+</body>
+</html>

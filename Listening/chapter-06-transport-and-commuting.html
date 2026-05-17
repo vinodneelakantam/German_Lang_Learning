@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Listening 06 - Transport and Commuting</title>
+<link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+<main class="main-shell">
+<a class="back-home" href="../index.html">← Back to Chapters</a>
+
+<div class="signature">
+  <strong id="signatureName"></strong>
+  <a id="signatureLink" target="_blank" rel="noopener"></a>
+</div>
+
+<div class="topbar">
+Speed:
+<select onchange="setSpeed(this.value)">
+<option value="0.5">Slow</option>
+<option value="1.0" selected>Normal</option>
+<option value="1.5">Fast</option>
+</select>
+<label style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#36506e;">
+<input type="checkbox" checked onchange="setAutoPlayNext(this.checked)">
+Auto-Play-Next topics
+</label>
+<button class="play-btn" onclick="handlePlaybackAction('play')">Play / Resume</button>
+<button onclick="handlePlaybackAction('pause')">Pause</button>
+<button class="stop-btn" onclick="handlePlaybackAction('stop')">Stop</button>
+<span id="playbackStatus" class="playback-status">Idle</span>
+</div>
+
+<h1 id="appTitle"></h1>
+<p id="appSubtitle" class="subtitle"></p>
+<p class="subtitle">Click any word to hear it. Use Play to run a full category. Total entries: <strong id="totalCount">0</strong></p>
+
+<section class="topic-preface">
+  <h2 class="section-title">Start Here</h2>
+  <p class="subtitle compact">Jump quickly to any category on this chapter page.</p>
+  <div id="topicPrefaceLinks" class="topic-links"></div>
+  <div id="rolePlayPrefaceLinks" class="topic-links"></div>
+</section>
+
+<div id="lessonsContainer"></div>
+<section id="rolePlaySection" style="display:none;">
+  <h2 class="section-title">Role Play Scenarios</h2>
+  <p class="subtitle">Play practical conversations for daily immigrant and tourist situations.</p>
+  <div id="rolePlayContainer" class="scenario-grid"></div>
+</section>
+</main>
+
+<script>
+const immigrantTemplates = [
+  ['I need {en}', 'Ich brauche {de}'],
+  ['Where can I find {en}', 'Wo finde ich {de}'],
+  ['Do you have {en}', 'Haben Sie {de}']
+];
+
+function buildLessons(topic, terms) {
+  const expandedRows = [];
+  terms.forEach(([en, de]) => {
+    expandedRows.push([en, de]);
+    immigrantTemplates.forEach(([enTemplate, deTemplate]) => {
+      expandedRows.push([
+        enTemplate.replace('{en}', en),
+        deTemplate.replace('{de}', de)
+      ]);
+    });
+  });
+
+  const lessons = [];
+  const chunkSize = 50;
+  for (let i = 0; i < expandedRows.length; i += chunkSize) {
+    lessons.push({
+      name: `${topic} ${String(i / chunkSize + 1).padStart(2, '0')}`,
+      entries: expandedRows.slice(i, i + chunkSize)
+    });
+  }
+  return lessons;
+}
+
+window.CHAPTER_CONFIG = {
+  title: 'Listening 06: Transport and Commuting',
+  subtitle: 'Listening practice for bus, train, ticket, and commuting vocabulary.',
+  signature: {
+    name: 'Vinod Kumar Neelakantam',
+    linkText: 'linkedin.com/in/vinodneelakantam',
+    linkHref: 'https://www.linkedin.com/in/vinodneelakantam/'
+  },
+  categories: [
+    {
+      title: 'Category: Transport and Commuting',
+      description: 'Practical transport terms for everyday movement in Germany.',
+      lessons: buildLessons('Transport and Commuting', [
+        ['bus stop', 'Bushaltestelle'],
+        ['train station', 'Bahnhof'],
+        ['subway', 'U Bahn'],
+        ['tram', 'Strassenbahn'],
+        ['ticket machine', 'Fahrkartenautomat'],
+        ['monthly pass', 'Monatskarte'],
+        ['platform', 'Bahnsteig'],
+        ['delay', 'Verspaetung'],
+        ['transfer', 'Umstieg'],
+        ['route', 'Strecke'],
+        ['departure', 'Abfahrt'],
+        ['arrival', 'Ankunft'],
+        ['seat', 'Sitzplatz'],
+        ['bike lane', 'Radweg'],
+        ['traffic', 'Verkehr'],
+        ['traffic light', 'Ampel'],
+        ['driver license', 'Fuehrerschein'],
+        ['fuel station', 'Tankstelle'],
+        ['parking ticket', 'Parkschein'],
+        ['commute', 'Arbeitsweg']
+      ])
+    }
+  ]
+};
+</script>
+<script src="../assets/chapter.js"></script>
+</body>
+</html>
